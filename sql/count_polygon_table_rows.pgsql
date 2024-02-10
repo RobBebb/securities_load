@@ -1,0 +1,10 @@
+SELECT 'polygon.exchange' AS table, count(*) FROM  polygon.exchange;
+SELECT 'polygon.dividend_type' AS table, count(*) FROM  polygon.dividend_type;
+SELECT 'polygon.ticker_type' AS table, count(*) FROM  polygon.ticker_type;
+SELECT 'polygon.asset_class' AS table, count(*) FROM  polygon.asset_class;
+SELECT 'polygon.market' AS table, count(*) FROM  polygon.market;
+SELECT 'polygon.exchange_type' AS table, count(*) FROM  polygon.exchange_type;
+SELECT 'polygon.ohlcv' AS table, count(*) FROM  polygon.ohlcv;
+SELECT 'polygon.dividend' AS table, count(*) FROM  polygon.dividend;
+SELECT 'polygon.split' AS table, count(*) FROM  polygon.split;
+SELECT 'polygon.ticker' AS table, count(*) FROM  polygon.ticker;
