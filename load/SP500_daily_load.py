@@ -4,7 +4,7 @@ Get symbols and load the data
 from datetime import datetime as dt
 import time
 from dotenv import load_dotenv
-from postgresql_database_functions import connect
+from securities_load.load.postgresql_database_functions import connect
 import SP500_daily_functions as SP500_daily_functions
 from dateutil.relativedelta import relativedelta
 

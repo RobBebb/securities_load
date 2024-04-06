@@ -8,8 +8,8 @@ Get daily data from polygon and insert it into our database.
 from os import lseek
 from dotenv import load_dotenv
 
-from postgresql_database_functions import connect
-import polygon_load_ohlcv as plo
+from securities_load.load.postgresql_database_functions import connect
+import securities_load.load.polygon_load_ohlcv as plo
 
 load_dotenv()
 

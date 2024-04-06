@@ -3,7 +3,7 @@ Read the daily prices from the PostgreSQL database
 """
 from dotenv import load_dotenv
 import pandas as pd
-from postgresql_database_functions import connect
+from securities_load.load.postgresql_database_functions import connect
 
 load_dotenv()
 # creating a query variable to store our query to pass into the function

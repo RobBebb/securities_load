@@ -7,12 +7,12 @@ Get the data from polygon and load it into the local polygon database.
 
 import datetime
 from dotenv import load_dotenv
-from postgresql_database_functions import connect
-from polygon_rest_functions import (
+from securities_load.load.postgresql_database_functions import connect
+from securities_load.load.polygon_rest_functions import (
     get_ohlcv,
     get_ohlcv_by_date,
 )
-from polygon_table_functions import add_ohlcv
+from securities_load.load.polygon_table_functions import add_ohlcv
 
 
 def load_ohlcvs(days=2):

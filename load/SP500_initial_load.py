@@ -7,7 +7,7 @@ Get S&P500 sysmbols from Wikipedia and insert them into our database.
 
 from dotenv import load_dotenv
 
-from postgresql_database_functions import connect
+from securities_load.load.postgresql_database_functions import connect
 import SP500_initial_functions as SP500_initial_functions
 
 load_dotenv()

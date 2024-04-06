@@ -7,13 +7,13 @@ Get the data from polygon and load it into the local polygon database.
 
 from dotenv import load_dotenv
 
-from postgresql_database_functions import connect
-import equity_load_ticker_types as eltt
-import equity_load_exchanges as ele
-import equity_load_tickers as elt
-import equity_load_splits as els
-import equity_load_dividends as eld
-import equity_load_daily_prices as eldp
+from securities_load.load.postgresql_database_functions import connect
+import securities_load.load.equity_load_ticker_types as eltt
+import securities_load.load.equity_load_exchanges as ele
+import securities_load.load.equity_load_tickers as elt
+import securities_load.load.equity_load_splits as els
+import securities_load.load.equity_load_dividends as eld
+import securities_load.load.equity_load_daily_prices as eldp
 
 
 load_dotenv()
@@ -32,9 +32,9 @@ conn = connect()
 #     polygon_table_functions.add_ticker_types(conn, ticker_type_data)
 
 # # last updated 5/10/2023
-# eltt.load_ticker_types()
-# ele.load_exchanges()
-# elt.load_tickers()
-# els.load_splits()
+eltt.load_ticker_types()
+ele.load_exchanges()
+elt.load_tickers()
+els.load_splits()
 eld.load_dividends()
-# eldp.load_daily_prices()
+eldp.load_daily_prices()

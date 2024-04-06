@@ -7,8 +7,8 @@ Get the daily_price data from the local polygon schema and load it into the loca
 
 from dotenv import load_dotenv
 
-from postgresql_database_functions import connect
-from equity_table_functions import add_daily_prices
+from securities_load.load.postgresql_database_functions import connect
+from securities_load.load.equity_table_functions import add_daily_prices
 
 
 def load_daily_prices():

@@ -1,0 +1,1 @@
+delete from polygon.ohlcv;

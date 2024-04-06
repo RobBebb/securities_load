@@ -7,9 +7,9 @@ Get the data from polygon and load it into the local polygon database.
 
 from dotenv import load_dotenv
 
-from postgresql_database_functions import connect
-from polygon_rest_functions import get_exchanges
-from polygon_table_functions import add_exchanges
+from securities_load.load.postgresql_database_functions import connect
+from securities_load.load.polygon_rest_functions import get_exchanges
+from securities_load.load.polygon_table_functions import add_exchanges
 
 
 def load_exchanges():

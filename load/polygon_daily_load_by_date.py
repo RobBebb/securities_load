@@ -11,12 +11,12 @@ Parameters:
 
 from dotenv import load_dotenv
 
-from postgresql_database_functions import connect
-import polygon_load_ohlcv as plo
+from securities_load.load.postgresql_database_functions import connect
+import securities_load.load.polygon_load_ohlcv as plo
 
 load_dotenv()
 
 # Open a connection
 conn = connect()
 
-plo.load_ohlcvs_by_date(start_date="2024-02-05", end_date="2024-02-07")
+plo.load_ohlcvs_by_date(start_date="2024-02-16", end_date="2024-04-01")
