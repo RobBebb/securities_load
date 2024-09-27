@@ -39,7 +39,8 @@ INSERT INTO polygon.asset_class (type, description) VALUES
     ('fx', Null),
     ('indices', Null),
     ('options', Null),
-    ('stocks', Null);
+    ('stocks', Null),
+    ('etp', Null);
 
 CREATE TABLE polygon.ticker_type (
     code varchar(32) NOT NULL,

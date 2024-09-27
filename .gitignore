@@ -1,2 +1,8 @@
-.env
-__pycache__
+sql/roles_and_databases.pgsql
+docs/databases and roles.md
+load/.env
+securities_load.log
+docs/my_training.md
+load_polygon/.env
+test/.env
+load_polygon/__pycache__/*.*

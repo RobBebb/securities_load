@@ -55,3 +55,54 @@ We need to install several python libraries. To install them:
 
 
 define environment variables
+
+# Structure
+
+There will be one database called **'securities'**. It will use PostgreSQL running on Linux.
+
+## Schemas
+
+There will be one primary schema, **'securities'**, that holds a set of information for all securities and will be the schema that is used for day to day analysis, trade journal, automated trading etc.
+
+The primary schema will contain a set of generic code tables that cater for all data.
+
+There will be multiple secondary schemas that will be used for loading data. In general there will be one secondary schema for each data source. For example **'polygon'**, **'yahoo'**, **'interactive brokers'** etc. The secondary schemas will have raw tables, that mimic the structure of the data source to allow easy initial loading, and may have additional tables to cater for transforming the data in such a way that it can easily be loaded into the primary schema.
+
+Data will initially be loaded into the secondary schemas in a raw state. It will then be transformed in the secondary schema, where necessary, before being loaded into the primary schema. The data must be transformed to match the generic code tables of the primary schema.
+
+In general code tables will be updated on a weekly basis. The transaction tables will be updated on a daily basis. The OHLCV table will have special consideration for performance and size reasons. Data for the OHLCV table may get loaded directly into the primary schema as it has a reasonably fixed format.
+
+## Programming
+
+Mutiple interface will be used. They are:
+
+### PGAdmin4
+
+PGAdmin4 will be used for looking at the structure of the database and running queries against the database.
+
+### Python
+
+Python will be used as the main programming language for loading data, automated analysis, automated trading etc.
+
+### Airflow
+
+Airflow will be used for scheduling batch jobs.
+
+### Jupyter
+
+Jupyter will be used for interactive analysis.
+
+### Budibase
+
+Budibase will be used as a CRUD type front end to the database.
+
+### VS Code
+
+All programming will be done in VS Code
+
+### DBeaver
+
+DBeaver will be used to draw up an ERD for the database.
+
+
+
