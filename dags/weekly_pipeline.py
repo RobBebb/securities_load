@@ -11,7 +11,6 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
-import load_polygon.polygon_to_securities_load_ohlcvs as psldp
 import securities_load.load_polygon.polygon_load_dividend as pld
 import securities_load.load_polygon.polygon_load_exchange as ple
 import securities_load.load_polygon.polygon_load_ohlcv as plo
@@ -19,6 +18,7 @@ import securities_load.load_polygon.polygon_load_split as pls
 import securities_load.load_polygon.polygon_load_ticker as plt
 import securities_load.load_polygon.polygon_load_ticker_type as pltt
 import securities_load.load_polygon.polygon_to_securities_load_dividends as psld
+import securities_load.load_polygon.polygon_to_securities_load_ohlcvs as psldp
 import securities_load.load_polygon.polygon_to_securities_load_splits as psls
 import securities_load.load_polygon.polygon_to_securities_load_tickers as pslt
 
@@ -78,9 +78,9 @@ with DAG(
         task_id="polygon_to_securities_load_splits",
         python_callable=psls.load_splits,
     )
-    polygon_to_securities_load_daily_prices = PythonOperator(
-        task_id="polygon_to_securities_load_daily_prices",
-        python_callable=psldp.load_daily_prices,
+    polygon_to_securities_load_ohlcvs = PythonOperator(
+        task_id="polygon_to_securities_load_ohlcvs",
+        python_callable=psldp.load_ohlcvs,
     )
 
 truncate_daily_polygon_tables >> truncate_weekly_polygon_tables
@@ -93,7 +93,7 @@ polygon_load_tickers >> polygon_load_ohlcvs
 polygon_load_tickers >> polygon_to_securities_load_tickers
 polygon_load_splits >> polygon_to_securities_load_splits
 polygon_load_dividends >> polygon_to_securities_load_dividends
-polygon_load_ohlcvs >> polygon_to_securities_load_daily_prices
+polygon_load_ohlcvs >> polygon_to_securities_load_ohlcvs
 polygon_to_securities_load_tickers >> polygon_to_securities_load_splits
 polygon_to_securities_load_tickers >> polygon_to_securities_load_dividends
-polygon_to_securities_load_tickers >> polygon_to_securities_load_daily_prices
+polygon_to_securities_load_tickers >> polygon_to_securities_load_ohlcvs

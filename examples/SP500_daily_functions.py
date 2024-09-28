@@ -7,6 +7,7 @@ for the symbols in the database.
 """
 
 from datetime import datetime as dt
+
 import psycopg2
 import psycopg2.extras
 import yfinance as yf
@@ -16,18 +17,21 @@ def obtain_list_of_db_tickers(conn):
     """
     Obtains a list of the ticker symbols in the database
     """
+    tickers = [("", "")]
+
     try:
         cur = conn.cursor()
         cur.execute("SELECT id, ticker from equity.symbol")
         conn.commit()
         data = cur.fetchall()
-        return [(d[0], d[1]) for d in data]
+        tickers = [(d[0], d[1]) for d in data]
     except psycopg2.Error as error1:
         print("Error while getting tickers from PostgreSQL", error1)
     finally:
         if conn:
             cur.close()
             print("PostgreSQL cursor is closed")
+        return tickers
 
 
 def get_daily_historic_data_yahoo_finance(ticker, start, end):

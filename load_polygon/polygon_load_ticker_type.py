@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from securities_load.load_polygon.polygon_rest_functions import get_ticker_types
 from securities_load.load_polygon.polygon_table_functions import add_ticker_types
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities_load.securities.postgresql_database_functions import connect
 
 
 def load_ticker_types():

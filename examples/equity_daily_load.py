@@ -8,7 +8,7 @@ Get the data from polygon and load it into the local polygon database.
 from dotenv import load_dotenv
 
 import securities_load.load_polygon.equity_load_daily_prices as eldp
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities.postgresql_database_functions import connect
 
 load_dotenv()
 

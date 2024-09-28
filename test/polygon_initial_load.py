@@ -13,7 +13,7 @@ import polygon_load_ticker as plt
 import polygon_load_ticker_type as pltt
 from dotenv import load_dotenv
 
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities.postgresql_database_functions import connect
 
 load_dotenv()
 

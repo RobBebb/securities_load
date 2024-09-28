@@ -8,7 +8,7 @@ Get S&P500 sysmbols from Wikipedia and insert them into our database.
 import SP500_initial_functions as SP500_initial_functions
 from dotenv import load_dotenv
 
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities.postgresql_database_functions import connect
 
 load_dotenv()
 

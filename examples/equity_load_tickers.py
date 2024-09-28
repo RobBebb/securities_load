@@ -8,8 +8,8 @@ load it into the local equity schema.
 
 from dotenv import load_dotenv
 
+from securities.postgresql_database_functions import connect
 from securities_load.load_polygon.equity_table_functions import add_tickers
-from securities_load.load_polygon.postgresql_database_functions import connect
 
 
 def load_tickers():

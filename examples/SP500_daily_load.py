@@ -4,12 +4,13 @@ Get symbols and load the data
 
 import time
 from datetime import datetime as dt
+from datetime import timezone
 
 import SP500_daily_functions as SP500_daily_functions
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities.postgresql_database_functions import connect
 
 TICKER_COUNT = 505  # Change this to 500+ (503 currently) to download all tickers
 WAIT_TIME_IN_SECONDS = 1.0  # Adjust how frequently the API is called
@@ -27,7 +28,7 @@ len_tickers = len(tickers)
 
 # Stores the current time, for the created_at field
 now = dt.utcnow()
-dt.now(dt.UTC)
+dt.now(timezone.utc)
 
 end_date = f"{now.year}-{now.month}-{now.day}"
 print(end_date)

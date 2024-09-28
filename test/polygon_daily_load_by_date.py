@@ -12,7 +12,7 @@ Parameters:
 from dotenv import load_dotenv
 
 import securities_load.load_polygon.polygon_load_ohlcv as plo
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities.postgresql_database_functions import connect
 
 load_dotenv()
 

@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities.postgresql_database_functions import connect
 
 
 def get_gics_sector_code(conn, sector_name):

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from securities_load.load_polygon.polygon_to_securities_table_functions import (
     add_dividends,
 )
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities_load.securities.postgresql_database_functions import connect
 
 
 def load_dividends():

@@ -12,14 +12,14 @@ from dotenv import load_dotenv
 
 schema = os.environ["DB_SCHEMA"]
 
+from securities.postgresql_database_functions import connect
 from securities_load.load_polygon.polygon_to_securities_table_functions import (
-    add_daily_prices,
     add_dividends,
     add_etp_tickers,
+    add_ohlcvs,
     add_splits,
     add_stock_tickers,
 )
-from securities_load.load_polygon.postgresql_database_functions import connect
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -45,7 +45,7 @@ conn = connect()
 # add_index_tickers(conn)
 # add_stock_tickers(conn)
 # add_etp_tickers(conn)
-add_daily_prices(conn)
+add_ohlcvs(conn)
 
 # Close the connection
 conn.close()

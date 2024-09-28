@@ -14,7 +14,7 @@ from securities_load.load_polygon.polygon_rest_functions import (
     get_ohlcv_by_date,
 )
 from securities_load.load_polygon.polygon_table_functions import add_ohlcv
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities_load.securities.postgresql_database_functions import connect
 
 
 def load_ohlcvs(days=2):

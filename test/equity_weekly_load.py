@@ -13,7 +13,7 @@ import securities_load.load_polygon.equity_load_exchanges as ele
 import securities_load.load_polygon.equity_load_splits as els
 import securities_load.load_polygon.equity_load_ticker_types as eltt
 import securities_load.load_polygon.equity_load_tickers as elt
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities.postgresql_database_functions import connect
 
 load_dotenv()
 

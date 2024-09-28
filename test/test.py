@@ -13,7 +13,7 @@ from securities_load.load_polygon.polygon_table_functions import read_tickers
 from securities_load.load_polygon.polygon_to_securities_table_functions import (
     get_currency_code,
 )
-from securities_load.load_polygon.postgresql_database_functions import connect
+from securities.postgresql_database_functions import connect
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

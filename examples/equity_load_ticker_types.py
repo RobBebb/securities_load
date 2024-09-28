@@ -7,8 +7,8 @@ Get the ticker_type data from the local polygon schema and load it into the loca
 
 from dotenv import load_dotenv
 
+from securities.postgresql_database_functions import connect
 from securities_load.load_polygon.equity_table_functions import add_ticker_types
-from securities_load.load_polygon.postgresql_database_functions import connect
 
 
 def load_ticker_types():
