@@ -2,6 +2,8 @@
 
 ## python loading code
 
+Run alter.pgsql against securities database (prod)
+
 Copy dev\securities_load\dags to prod\securities_load\dags
 
 ```cmd

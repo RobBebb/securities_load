@@ -104,5 +104,7 @@ All programming will be done in VS Code
 
 DBeaver will be used to draw up an ERD for the database.
 
+### Packages
 
-
+- conda install openPYXL
+- pip install "yfinance[nospam, repair]"

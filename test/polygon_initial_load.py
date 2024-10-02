@@ -5,14 +5,14 @@ Author: Rob Bebbington
 Get static files from polygon and insert them into our database.
 """
 
-import polygon_load_dividend as pld
-import polygon_load_exchange as ple
-import polygon_load_ohlcv as plo
-import polygon_load_split as pls
-import polygon_load_ticker as plt
-import polygon_load_ticker_type as pltt
 from dotenv import load_dotenv
 
+import securities_load.load_polygon.polygon_load_dividend as pld
+import securities_load.load_polygon.polygon_load_exchange as ple
+import securities_load.load_polygon.polygon_load_ohlcv as plo
+import securities_load.load_polygon.polygon_load_split as pls
+import securities_load.load_polygon.polygon_load_ticker as plt
+import securities_load.load_polygon.polygon_load_ticker_type as pltt
 from securities.postgresql_database_functions import connect
 
 load_dotenv()

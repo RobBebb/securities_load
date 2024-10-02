@@ -1,43 +1,15 @@
--- The securities schema contains data that has been cleaned and transforned.
-
-DROP TABLE IF EXISTS securities.ohlcv;
-DROP TABLE IF EXISTS securities.watchlist_ticker;
-DROP TABLE IF EXISTS securities.transaction;
-DROP TABLE IF EXISTS securities.leg;
-DROP TABLE IF EXISTS securities.order;
-DROP TABLE IF EXISTS securities.trade;
-DROP TABLE IF EXISTS securities.ticker;
-DROP TABLE IF EXISTS securities.dividend;
-DROP TABLE IF EXISTS securities.split;
-DROP TABLE IF EXISTS securities.dividend_type;
-DROP TABLE IF EXISTS securities.ticker_type;
-DROP TABLE IF EXISTS securities.exchange;
-DROP TABLE IF EXISTS securities.country_currency;
-DROP TABLE IF EXISTS securities.country;
-DROP TABLE IF EXISTS securities.currency;
-DROP TABLE IF EXISTS securities.gics;
+ALTER TABLE securities.ticker
+DROP CONSTRAINT IF EXISTS fk_ticker_sector;
+ALTER TABLE securities.ticker
+DROP CONSTRAINT IF EXISTS fk_ticker_industry_group;
+ALTER TABLE securities.ticker
+DROP CONSTRAINT IF EXISTS fk_ticker_industry;
+ALTER TABLE securities.ticker
+DROP CONSTRAINT IF EXISTS fk_ticker_sub_industry;
 DROP TABLE IF EXISTS securities.gics_sub_industry;
 DROP TABLE IF EXISTS securities.gics_industry;
 DROP TABLE IF EXISTS securities.gics_industry_group;
 DROP TABLE IF EXISTS securities.gics_sector;
-DROP TABLE IF EXISTS securities.data_vendor;
-DROP TABLE IF EXISTS securities.watchlist;
-DROP TABLE IF EXISTS securities.leg_status;
-DROP TABLE IF EXISTS securities.trade_status;
-DROP TABLE IF EXISTS securities.order_status;
-DROP TABLE IF EXISTS securities.trade_type;
-DROP TABLE IF EXISTS securities.strategy;
-DROP TABLE IF EXISTS securities.action;
-DROP TABLE IF EXISTS securities.newsletter;
-DROP TABLE IF EXISTS securities.analyst;
-DROP TABLE IF EXISTS securities.account;
-DROP TABLE IF EXISTS securities.portfolio;
-DROP TABLE IF EXISTS securities.broker;
-DROP TABLE IF EXISTS securities.watchlist_type;
-
-DROP SCHEMA IF EXISTS securities;
-
-CREATE SCHEMA IF NOT EXISTS securities AUTHORIZATION securities;
 
 CREATE TABLE IF NOT EXISTS securities.gics_sector (
 	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -62,22 +34,25 @@ INSERT INTO securities.gics_sector (code, name, aus_index_ticker, definition, st
 	('45', 'Information Technology', 'XIJ', 'The Information Technology Sector comprises companies that offer software and information technology services, manufacturers and distributors of technology hardware & equipment such as communications equipment, cellular phones, computers & peripherals, electronic equipment and related instruments, and semiconductors.', '1999-01-01', NULL),
 	('50', 'Communication Services', 'XTJ', 'The Communication Services Sector includes companies that facilitate communication and offer related content and information through various mediums. It includes telecom and media & entertainment companies including producers of interactive gaming products and companies engaged in content and information creation or distribution through proprietary platforms.', '1999-01-01', NULL),
 	('55', 'Utilities', 'XUJ', 'The Utilities Sector comprises utility companies such as electric, gas and water utilities. It also includes independent power producers & energy traders and companies that engage in generation and distribution of electricity using renewable sources.', '1999-01-01', NULL),
-	('60', 'Real Estate', 'XPJ', 'The Real Estate Sector contains companies engaged in real estate development and operation. It also includes companies offering real estate related services and Equity Real Estate Investment Trusts (REITs).', '1999-01-01', NULL);
+	('60', 'Real Estate', 'XPJ', 'The Real Estate Sector contains companies engaged in real estate development and operation. It also includes companies offering real estate related services and Equity Real Estate Investment Trusts (REITs).', '1999-01-01', NULL),
+	('90', 'Class Pend', '', 'Classification Pending.', '1999-01-01', NULL),
+	('95', 'Not Applic', '', 'Not Applicable', '1999-01-01', NULL);
 
 
 CREATE TABLE IF NOT EXISTS securities.gics_industry_group (
 	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     code char(4) UNIQUE NOT NULL,
     name varchar(255) NOT NULL,
-    sector_code char(2) NOT NULL,
+    sector_id integer DEFAULT NULL,
+    sector_code char(2) DEFAULT NULL,
     start_date date DEFAULT NULL,
     end_date date DEFAULT NULL,
     created_date timestamp with time zone DEFAULT current_timestamp,
     last_updated_date timestamp with time zone,
 	CONSTRAINT FK_gics_industry_group_gics_sector 
-        FOREIGN KEY(sector_code)
-        REFERENCES securities.gics_sector(code)
-        ON DELETE CASCADE);
+        FOREIGN KEY(sector_id)
+        REFERENCES securities.gics_sector(id)
+        ON DELETE SET NULL);
 
 INSERT INTO securities.gics_industry_group (code, name, sector_code, start_date, end_date) VALUES
 	('1010', 'Energy', '10', '1999-01-01', NULL),
@@ -94,7 +69,7 @@ INSERT INTO securities.gics_industry_group (code, name, sector_code, start_date,
 	('3020', 'Food, Beverage & Tobacco', '30', '1999-01-01', NULL),
 	('3030', 'Household & Personal Products', '30', '1999-01-01', NULL),
 	('3510', 'Health Care Equipment & Services', '35', '1999-01-01', NULL),
-	('3520', 'Pharmaceuticals, BioTechnology & Life Sciences', '35', '1999-01-01', NULL),
+	('3520', 'Pharmaceuticals, Biotechnology & Life Sciences', '35', '1999-01-01', NULL),
 	('4010', 'Banks', '40', '1999-01-01', NULL),
 	('4020', 'Financial Services', '40', '2023-03-17', NULL),
 	('4030', 'Insurance', '40', '1999-01-01', NULL),
@@ -106,21 +81,33 @@ INSERT INTO securities.gics_industry_group (code, name, sector_code, start_date,
 	('5020', 'Media & Entertainment', '50', '2018-09-29', NULL),
 	('5510', 'Utilities', '55', '1999-01-01', NULL),
 	('6010', 'Equity Real Estate Investment Trusts (REITs)', '60', '2023-03-17', NULL),
-	('6020', 'Real Estate Management & Development', '60', '2023-03-17', NULL);
+	('6020', 'Real Estate Management & Development', '60', '2023-03-17', NULL),
+	('9090', 'Class Pend', '90', '1999-01-01', NULL),
+	('9595', 'Not Applic', '95', '1999-01-01', NULL);
+
+WITH subquery AS (
+    SELECT s.id, s.code
+    FROM  securities.gics_sector s, securities.gics_industry_group i WHERE s.code = i.sector_code
+)
+UPDATE securities.gics_industry_group
+SET sector_id = subquery.id
+FROM subquery
+WHERE securities.gics_industry_group.sector_code = subquery.code;
 
 CREATE TABLE IF NOT EXISTS securities.gics_industry (
 	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     code char(6) UNIQUE NOT NULL,
     name varchar(255) NOT NULL,
-    industry_group_code char(4) NOT NULL,
+    industry_group_id integer DEFAULT NULL,
+    industry_group_code char(4) DEFAULT NULL,
     start_date date DEFAULT NULL,
     end_date date DEFAULT NULL,
     created_date timestamp with time zone DEFAULT current_timestamp,
     last_updated_date timestamp with time zone,
 	CONSTRAINT FK_gics_industry_gics_industry_group
-        FOREIGN KEY(industry_group_code)
-        REFERENCES securities.gics_industry_group(code)
-        ON DELETE CASCADE);
+        FOREIGN KEY(industry_group_id)
+        REFERENCES securities.gics_industry_group(id)
+        ON DELETE SET NULL);
 
 INSERT INTO securities.gics_industry (code, name, industry_group_code, start_date, end_date) VALUES
 	('101010', 'Energy Equipment & Services', '1010', '1999-01-01', NULL),
@@ -205,22 +192,34 @@ INSERT INTO securities.gics_industry (code, name, industry_group_code, start_dat
 	('601060', 'Residential REITs', '6010', '2023-03-17', NULL),
 	('601070', 'Retail REITs', '6010', '2023-03-17', NULL),
 	('601080', 'Specialized REITs', '6010', '2023-03-17', NULL),
-	('602010', 'Real Estate Management & Development', '6020', '2023-03-17', NULL);
+	('602010', 'Real Estate Management & Development', '6020', '2023-03-17', NULL),
+    ('909090', 'Class Pend', '9090', '1999-01-01', NULL),
+	('959595', 'Not Applic', '9595', '1999-01-01', NULL);
+
+WITH subquery AS (
+    SELECT g.id, g.code
+    FROM  securities.gics_industry_group g, securities.gics_industry i WHERE g.code = i.industry_group_code 
+)
+UPDATE securities.gics_industry
+SET industry_group_id = subquery.id
+FROM subquery
+WHERE securities.gics_industry.industry_group_code = subquery.code;
 
 CREATE TABLE IF NOT EXISTS securities.gics_sub_industry (
 	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     code char(8) UNIQUE NOT NULL,
     name varchar(255) NOT NULL,
     description varchar(1000) DEFAULT NULL,
-    industry_code char(6) NOT NULL,
+    industry_id integer DEFAULT NULL,
+    industry_code char(6) DEFAULT NULL,
     start_date date DEFAULT NULL,
     end_date date DEFAULT NULL,
     created_date timestamp with time zone DEFAULT current_timestamp,
     last_updated_date timestamp with time zone,
 	CONSTRAINT FK_gics_sub_industry_gics_industry 
-        FOREIGN KEY(industry_code)
-        REFERENCES securities.gics_industry(code)
-        ON DELETE CASCADE);
+        FOREIGN KEY(industry_id)
+        REFERENCES securities.gics_industry(id)
+        ON DELETE SET NULL);
 
 INSERT INTO securities.gics_sub_industry (code, name, description, industry_code, start_date, end_date) VALUES
 	('10101010', 'Oil & Gas Drilling', 'Drilling contractors or owners of drilling rigs that contract their services for drilling wells.', '101010', '1999-01-01', NULL),
@@ -427,1386 +426,49 @@ INSERT INTO securities.gics_sub_industry (code, name, description, industry_code
 	('60201010', 'Diversified Real Estate Activities', 'Companies engaged in a diverse spectrum of real estate activities including real estate development & sales, real estate management, or real estate services, but with no dominant business line.', '602010', '2023-03-17', NULL),
 	('60201020', 'Real Estate Operating Companies', 'Companies engaged in operating real estate properties for the purpose of leasing & management.', '602010', '2023-03-17', NULL),
 	('60201030', 'Real Estate Development', 'Companies that develop real estate and sell the properties after development. Excludes companies classified in the Homebuilding Sub-Industry.', '602010', '2023-03-17', NULL),
-	('60201040', 'Real Estate Services', 'Real estate service providers such as real estate agents, brokers & real estate appraisers.', '602010', '2023-03-17', NULL);
+	('60201040', 'Real Estate Services', 'Real estate service providers such as real estate agents, brokers & real estate appraisers.', '602010', '2023-03-17', NULL),
+    ('90909090', 'Class Pend', '', '909090', '1999-01-01', NULL),
+	('95959595', 'Not Applic', '', '959595', '1999-01-01', NULL);
 
-CREATE TABLE IF NOT EXISTS securities.gics (
-    code char(8) PRIMARY KEY,
-    parent_code char(8),
-    name varchar(255) NOT NULL,
-    definition varchar(1000) DEFAULT NULL,
-    start_date date DEFAULT NULL,
-    end_date date DEFAULT NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-	CONSTRAINT FK_gics_gics 
-        FOREIGN KEY(parent_code)
-        REFERENCES securities.gics);
-
-INSERT INTO securities.gics (code, name, definition, start_date, end_date) 
-    SELECT code, name, definition, start_date, end_date
-    FROM securities.gics_sector;
-
-INSERT INTO securities.gics (code, parent_code, name, start_date, end_date) 
-    SELECT code, sector_code, name, start_date, end_date
-    FROM securities.gics_industry_group;
-
-INSERT INTO securities.gics (code, parent_code, name, start_date, end_date) 
-    SELECT code, industry_group_code, name, start_date, end_date
-    FROM securities.gics_industry;
-
-INSERT INTO securities.gics (code, parent_code, name, definition, start_date, end_date) 
-    SELECT code, industry_code, name, description, start_date, end_date
-    FROM securities.gics_sub_industry;
-
-CREATE TABLE IF NOT EXISTS securities.currency (
-    code char(4) PRIMARY KEY,
-    currency varchar(100) NOT NULL,
-	minor_unit smallint,
-	symbol varchar(100),
-    start_date date DEFAULT NULL,
-    end_date date DEFAULT NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone);
-
-INSERT INTO securities.currency (code,currency,minor_unit,symbol) VALUES
-	 ('AED ','UAE Dirham',2,'د.إ'),
-	 ('AFN ','Afghani',2,'؋'),
-	 ('ALL ','Lek',2,'Lek'),
-	 ('AMD ','Armenian Dram',2,NULL),
-	 ('ANG ','Netherlands Antillean Guilder',2,NULL),
-	 ('AOA ','Kwanza',2,NULL),
-	 ('ARS ','Argentine Peso',2,'$'),
-	 ('AUD ','Australian Dollar',2,'$'),
-	 ('AWG ','Aruban Florin',2,NULL),
-	 ('AZN ','Azerbaijan Manat',2,NULL),
-	 ('BAM ','Convertible Mark',2,NULL),
-	 ('BBD ','Barbados Dollar',2,'$'),
-	 ('BDT ','Taka',2,'৳'),
-	 ('BGN ','Bulgarian Lev',2,'лв'),
-	 ('BHD ','Bahraini Dinar',3,NULL),
-	 ('BIF ','Burundi Franc',0,NULL),
-	 ('BMD ','Bermudian Dollar',2,NULL),
-	 ('BND ','Brunei Dollar',2,NULL),
-	 ('BOB ','Boliviano',2,NULL),
-	 ('BOV ','Mvdol',2,NULL),
-	 ('BRL ','Brazilian Real',2,'R$'),
-	 ('BSD ','Bahamian Dollar',2,'$'),
-	 ('BTN ','Ngultrum',2,NULL),
-	 ('BWP ','Pula',2,NULL),
-	 ('BYN ','Belarusian Ruble',2,NULL),
-	 ('BZD ','Belize Dollar',2,'BZ$'),
-	 ('CAD ','Canadian Dollar',2,'$'),
-	 ('CDF ','Congolese Franc',2,NULL),
-	 ('CHE ','WIR Euro',2,NULL),
-	 ('CHF ','Swiss Franc',2,NULL),
-	 ('CHW ','WIR Franc',2,NULL),
-	 ('CLF ','Unidad de Fomento',4,NULL),
-	 ('CLP ','Chilean Peso',0,'$'),
-	 ('CNY ','Yuan Renminbi',2,'¥'),
-	 ('COP ','Colombian Peso',2,'$'),
-	 ('COU ','Unidad de Valor Real',2,NULL),
-	 ('CRC ','Costa Rican Colon',2,NULL),
-	 ('CUC ','Peso Convertible',2,NULL),
-	 ('CUP ','Cuban Peso',2,NULL),
-	 ('CVE ','Cabo Verde Escudo',2,NULL),
-	 ('CZK ','Czech Koruna',2,'Kč'),
-	 ('DJF ','Djibouti Franc',0,NULL),
-	 ('DKK ','Danish Krone',2,'kr'),
-	 ('DOP ','Dominican Peso',2,NULL),
-	 ('DZD ','Algerian Dinar',2,NULL),
-	 ('EGP ','Egyptian Pound',2,NULL),
-	 ('ERN ','Nakfa',2,NULL),
-	 ('ETB ','Ethiopian Birr',2,NULL),
-	 ('EUR ','Euro',2,'€'),
-	 ('FJD ','Fiji Dollar',2,NULL),
-	 ('FKP ','Falkland Islands Pound',2,NULL),
-	 ('GBP ','Pound Sterling',2,'£'),
-	 ('GEL ','Lari',2,'₾'),
-	 ('GHS ','Ghana Cedi',2,NULL),
-	 ('GIP ','Gibraltar Pound',2,NULL),
-	 ('GMD ','Dalasi',2,NULL),
-	 ('GNF ','Guinean Franc',0,NULL),
-	 ('GTQ ','Quetzal',2,NULL),
-	 ('GYD ','Guyana Dollar',2,NULL),
-	 ('HKD ','Hong Kong Dollar',2,'$'),
-	 ('HNL ','Lempira',2,NULL),
-	 ('HRK ','Kuna',2,'kn'),
-	 ('HTG ','Gourde',2,NULL),
-	 ('HUF ','Forint',2,'ft'),
-	 ('IDR ','Rupiah',2,'Rp'),
-	 ('ILS ','New Israeli Sheqel',2,'₪'),
-	 ('INR ','Indian Rupee',2,'₹'),
-	 ('IQD ','Iraqi Dinar',3,NULL),
-	 ('IRR ','Iranian Rial',2,NULL),
-	 ('ISK ','Iceland Krona',0,NULL),
-	 ('JMD ','Jamaican Dollar',2,NULL),
-	 ('JOD ','Jordanian Dinar',3,NULL),
-	 ('JPY ','Yen',0,'¥'),
-	 ('KES ','Kenyan Shilling',2,'Ksh'),
-	 ('KGS ','Som',2,NULL),
-	 ('KHR ','Riel',2,'៛'),
-	 ('KMF ','Comorian Franc ',0,NULL),
-	 ('KPW ','North Korean Won',2,NULL),
-	 ('KRW ','Won',0,'₩'),
-	 ('KWD ','Kuwaiti Dinar',3,NULL),
-	 ('KYD ','Cayman Islands Dollar',2,NULL),
-	 ('KZT ','Tenge',2,NULL),
-	 ('LAK ','Lao Kip',2,NULL),
-	 ('LBP ','Lebanese Pound',2,NULL),
-	 ('LKR ','Sri Lanka Rupee',2,'Rs'),
-	 ('LRD ','Liberian Dollar',2,NULL),
-	 ('LSL ','Loti',2,NULL),
-	 ('LYD ','Libyan Dinar',3,NULL),
-	 ('MAD ','Moroccan Dirham',2,' .د.م '),
-	 ('MDL ','Moldovan Leu',2,NULL),
-	 ('MGA ','Malagasy Ariary',2,NULL),
-	 ('MKD ','Denar',2,NULL),
-	 ('MMK ','Kyat',2,NULL),
-	 ('MNT ','Tugrik',2,NULL),
-	 ('MOP ','Pataca',2,NULL),
-	 ('MRU ','Ouguiya',2,NULL),
-	 ('MUR ','Mauritius Rupee',2,NULL),
-	 ('MVR ','Rufiyaa',2,NULL),
-	 ('MWK ','Malawi Kwacha',2,NULL),
-	 ('MXN ','Mexican Peso',2,'$');
-INSERT INTO securities.currency (code,currency,minor_unit,symbol) VALUES
-	 ('MXV ','Mexican Unidad de Inversion (UDI)',2,NULL),
-	 ('MYR ','Malaysian Ringgit',2,'RM'),
-	 ('MZN ','Mozambique Metical',2,NULL),
-	 ('NAD ','Namibia Dollar',2,NULL),
-	 ('NGN ','Naira',2,'₦'),
-	 ('NIO ','Cordoba Oro',2,NULL),
-	 ('NOK ','Norwegian Krone',2,'kr'),
-	 ('NPR ','Nepalese Rupee',2,NULL),
-	 ('NZD ','New Zealand Dollar',2,'$'),
-	 ('OMR ','Rial Omani',3,NULL),
-	 ('PAB ','Balboa',2,NULL),
-	 ('PEN ','Sol',2,'S'),
-	 ('PGK ','Kina',2,NULL),
-	 ('PHP ','Philippine Peso',2,'₱'),
-	 ('PKR ','Pakistan Rupee',2,'Rs'),
-	 ('PLN ','Zloty',2,'zł'),
-	 ('PYG ','Guarani',0,NULL),
-	 ('QAR ','Qatari Rial',2,NULL),
-	 ('RON ','Romanian Leu',2,'lei'),
-	 ('RSD ','Serbian Dinar',2,NULL),
-	 ('RUB ','Russian Ruble',2,'₽'),
-	 ('RWF ','Rwanda Franc',0,NULL),
-	 ('SAR ','Saudi Riyal',2,NULL),
-	 ('SBD ','Solomon Islands Dollar',2,NULL),
-	 ('SCR ','Seychelles Rupee',2,NULL),
-	 ('SDG ','Sudanese Pound',2,NULL),
-	 ('SEK ','Swedish Krona',2,'kr'),
-	 ('SGD ','Singapore Dollar',2,'$'),
-	 ('SHP ','Saint Helena Pound',2,NULL),
-	 ('SLL ','Leone',2,NULL),
-	 ('SOS ','Somali Shilling',2,NULL),
-	 ('SRD ','Surinam Dollar',2,NULL),
-	 ('SSP ','South Sudanese Pound',2,NULL),
-	 ('STN ','Dobra',2,NULL),
-	 ('SVC ','El Salvador Colon',2,NULL),
-	 ('SYP ','Syrian Pound',2,NULL),
-	 ('SZL ','Lilangeni',2,NULL),
-	 ('THB ','Baht',2,'฿'),
-	 ('TJS ','Somoni',2,NULL),
-	 ('TMT ','Turkmenistan New Manat',2,NULL),
-	 ('TND ','Tunisian Dinar',3,NULL),
-	 ('TOP ','Pa’anga',2,NULL),
-	 ('TRY ','Turkish Lira',2,'₺'),
-	 ('TTD ','Trinidad and Tobago Dollar',2,NULL),
-	 ('TWD ','New Taiwan Dollar',2,NULL),
-	 ('TZS ','Tanzanian Shilling',2,NULL),
-	 ('UAH ','Hryvnia',2,'₴'),
-	 ('UGX ','Uganda Shilling',0,NULL),
-	 ('USD ','US Dollar',2,'$'),
-	 ('USN ','US Dollar (Next day)',2,NULL),
-	 ('UYI ','Uruguay Peso en Unidades Indexadas (UI)',0,NULL),
-	 ('UYU ','Peso Uruguayo',2,NULL),
-	 ('UYW ','Unidad Previsional',4,NULL),
-	 ('UZS ','Uzbekistan Sum',2,NULL),
-	 ('VES ','Bolívar Soberano',2,NULL),
-	 ('VND ','Dong',0,'₫'),
-	 ('VUV ','Vatu',0,NULL),
-	 ('WST ','Tala',2,NULL),
-	 ('XAF ','CFA Franc BEAC',0,NULL),
-	 ('XBT ','Bitcoin',8,'₿'),
-	 ('XCD ','East Caribbean Dollar',2,NULL),
-	 ('XDR ','SDR (Special Drawing Right)',0,NULL),
-	 ('XOF ','CFA Franc BCEAO',0,NULL),
-	 ('XPF ','CFP Franc',0,NULL),
-	 ('XSU ','Sucre',0,NULL),
-	 ('XUA ','ADB Unit of Account',0,NULL),
-	 ('YER ','Yemeni Rial',2,NULL),
-	 ('ZAR ','Rand',2,'R'),
-	 ('ZMW ','Zambian Kwacha',2,NULL),
-	 ('ZWL ','Zimbabwe Dollar',2,NULL);
-
-CREATE TABLE IF NOT EXISTS securities.country (
-    alpha_3 char(3) PRIMARY KEY,
-    id integer NOT NULL,
-	alpha_2 char(2) NOT NULL,
-    name varchar(75) NOT NULL,
-    start_date date DEFAULT NULL,
-    end_date date DEFAULT NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone);
-
-INSERT INTO securities.country (alpha_3,id,alpha_2,"name") VALUES
-	 ('AFG',4,'AF','Afghanistan'),
-	 ('ALB',8,'AL','Albania'),
-	 ('DZA',12,'DZ','Algeria'),
-	 ('AND',20,'AD','Andorra'),
-	 ('AGO',24,'AO','Angola'),
-	 ('ATG',28,'AG','Antigua and Barbuda'),
-	 ('ARG',32,'AR','Argentina'),
-	 ('ARM',51,'AM','Armenia'),
-	 ('ABW',533,'AW','Aruba'),
-	 ('AUS',36,'AU','Australia'),
-	 ('AUT',40,'AT','Austria'),
-	 ('AZE',31,'AZ','Azerbaijan'),
-	 ('BHS',44,'BS','Bahamas'),
-	 ('BHR',48,'BH','Bahrain'),
-	 ('BGD',50,'BD','Bangladesh'),
-	 ('BRB',52,'BB','Barbados'),
-	 ('BLR',112,'BY','Belarus'),
-	 ('BEL',56,'BE','Belgium'),
-	 ('BLZ',84,'BZ','Belize'),
-	 ('BEN',204,'BJ','Benin'),
-	 ('BTN',64,'BT','Bhutan'),
-	 ('BOL',68,'BO','Bolivia'),
-	 ('BIH',70,'BA','Bosnia and Herzegovina'),
-	 ('BWA',72,'BW','Botswana'),
-	 ('BRA',76,'BR','Brazil'),
-	 ('BRN',96,'BN','Brunei Darussalam'),
-	 ('BGR',100,'BG','Bulgaria'),
-	 ('BFA',854,'BF','Burkina Faso'),
-	 ('BDI',108,'BI','Burundi'),
-	 ('CPV',132,'CV','Cabo Verde'),
-	 ('KHM',116,'KH','Cambodia'),
-	 ('CMR',120,'CM','Cameroon'),
-	 ('CAN',124,'CA','Canada'),
-	 ('CAF',140,'CF','Central African Republic'),
-	 ('TCD',148,'TD','Chad'),
-	 ('CHL',152,'CL','Chile'),
-	 ('CHN',156,'CN','China'),
-	 ('COL',170,'CO','Colombia'),
-	 ('COM',174,'KM','Comoros'),
-	 ('COG',178,'CG','Congo'),
-	 ('COD',180,'CD','Congo, Democratic Republic of the'),
-	 ('CRI',188,'CR','Costa Rica'),
-	 ('CIV',384,'CI','Côte d''Ivoire'),
-	 ('HRV',191,'HR','Croatia'),
-	 ('CUB',192,'CU','Cuba'),
-	 ('CYP',196,'CY','Cyprus'),
-	 ('CZE',203,'CZ','Czechia'),
-	 ('DNK',208,'DK','Denmark'),
-	 ('DJI',262,'DJ','Djibouti'),
-	 ('DMA',212,'DM','Dominica'),
-	 ('DOM',214,'DO','Dominican Republic'),
-	 ('ECU',218,'EC','Ecuador'),
-	 ('EGY',818,'EG','Egypt'),
-	 ('SLV',222,'SV','El Salvador'),
-	 ('GNQ',226,'GQ','Equatorial Guinea'),
-	 ('ERI',232,'ER','Eritrea'),
-	 ('EST',233,'EE','Estonia'),
-	 ('SWZ',748,'SZ','Eswatini'),
-	 ('ETH',231,'ET','Ethiopia'),
-	 ('FJI',242,'FJ','Fiji'),
-	 ('FIN',246,'FI','Finland'),
-	 ('FRA',250,'FR','France'),
-	 ('GAB',266,'GA','Gabon'),
-	 ('GMB',270,'GM','Gambia'),
-	 ('GEO',268,'GE','Georgia'),
-	 ('DEU',276,'DE','Germany'),
-	 ('GHA',288,'GH','Ghana'),
-	 ('GIB',292,'GI','Gibraltar'),
-	 ('GRC',300,'GR','Greece'),
-	 ('GRD',308,'GD','Grenada'),
-	 ('GLP',312,'GP','Guadeloupe'),
-	 ('GTM',320,'GT','Guatemala'),
-	 ('GUM',316,'GU','Guam'),
-	 ('GGY',831,'GG','Guernsey'),
-	 ('GIN',324,'GN','Guinea'),
-	 ('GNB',624,'GW','Guinea-Bissau'),
-	 ('GUY',328,'GY','Guyana'),
-	 ('HTI',332,'HT','Haiti'),
-	 ('VAT',336,'VA','Holy See (Vatican)'),
-	 ('HND',340,'HN','Honduras'),
-	 ('HKG',344,'HK','Hong Kong'),
-	 ('HUN',348,'HU','Hungary'),
-	 ('ISL',352,'IS','Iceland'),
-	 ('IND',356,'IN','India'),
-	 ('IDN',360,'ID','Indonesia'),
-	 ('IRN',364,'IR','Iran (Islamic Republic of)'),
-	 ('IRQ',368,'IQ','Iraq'),
-	 ('IRL',372,'IE','Ireland'),
-	 ('ISR',376,'IL','Israel'),
-	 ('ITA',380,'IT','Italy'),
-	 ('JAM',388,'JM','Jamaica'),
-	 ('JPN',392,'JP','Japan'),
-	 ('JOR',400,'JO','Jordan'),
-	 ('KAZ',398,'KZ','Kazakhstan'),
-	 ('KEN',404,'KE','Kenya'),
-	 ('KIR',296,'KI','Kiribati'),
-	 ('PRK',408,'KP','Korea (Democratic People''s Republic of)'),
-	 ('KOR',410,'KR','Korea, Republic of'),
-	 ('KWT',414,'KW','Kuwait'),
-	 ('KGZ',417,'KG','Kyrgyzstan');
-INSERT INTO securities.country (alpha_3,id,alpha_2,"name") VALUES
-	 ('LAO',418,'LA','Lao People''s Democratic Republic'),
-	 ('LVA',428,'LV','Latvia'),
-	 ('LBN',422,'LB','Lebanon'),
-	 ('LSO',426,'LS','Lesotho'),
-	 ('LBR',430,'LR','Liberia'),
-	 ('LBY',434,'LY','Libya'),
-	 ('LIE',438,'LI','Liechtenstein'),
-	 ('LTU',440,'LT','Lithuania'),
-	 ('LUX',442,'LU','Luxembourg'),
-	 ('MDG',450,'MG','Madagascar'),
-	 ('MWI',454,'MW','Malawi'),
-	 ('MYS',458,'MY','Malaysia'),
-	 ('MDV',462,'MV','Maldives'),
-	 ('MLI',466,'ML','Mali'),
-	 ('MLT',470,'MT','Malta'),
-	 ('MHL',584,'MH','Marshall Islands'),
-	 ('MRT',478,'MR','Mauritania'),
-	 ('MUS',480,'MU','Mauritius'),
-	 ('MEX',484,'MX','Mexico'),
-	 ('FSM',583,'FM','Micronesia (Federated States of)'),
-	 ('MDA',498,'MD','Moldova, Republic of'),
-	 ('MCO',492,'MC','Monaco'),
-	 ('MNG',496,'MN','Mongolia'),
-	 ('MNE',499,'ME','Montenegro'),
-	 ('MAR',504,'MA','Morocco'),
-	 ('MOZ',508,'MZ','Mozambique'),
-	 ('MMR',104,'MM','Myanmar'),
-	 ('NAM',516,'NA','Namibia'),
-	 ('NRU',520,'NR','Nauru'),
-	 ('NPL',524,'NP','Nepal'),
-	 ('NLD',528,'NL','Netherlands'),
-	 ('NZL',554,'NZ','New Zealand'),
-	 ('NIC',558,'NI','Nicaragua'),
-	 ('NER',562,'NE','Niger'),
-	 ('NGA',566,'NG','Nigeria'),
-	 ('MKD',807,'MK','North Macedonia'),
-	 ('NOR',578,'NO','Norway'),
-	 ('OMN',512,'OM','Oman'),
-	 ('PAK',586,'PK','Pakistan'),
-	 ('PLW',585,'PW','Palau'),
-	 ('PAN',591,'PA','Panama'),
-	 ('PNG',598,'PG','Papua New Guinea'),
-	 ('PRY',600,'PY','Paraguay'),
-	 ('PER',604,'PE','Peru'),
-	 ('PHL',608,'PH','Philippines'),
-	 ('POL',616,'PL','Poland'),
-	 ('PRT',620,'PT','Portugal'),
-	 ('QAT',634,'QA','Qatar'),
-	 ('ROU',642,'RO','Romania'),
-	 ('RUS',643,'RU','Russian Federation'),
-	 ('RWA',646,'RW','Rwanda'),
-	 ('BLM',652,'BL','Saint Barthélemy'),
-	 ('KNA',659,'KN','Saint Kitts and Nevis'),
-	 ('LCA',662,'LC','Saint Lucia'),
-	 ('VCT',670,'VC','Saint Vincent and the Grenadines'),
-	 ('WSM',882,'WS','Samoa'),
-	 ('SMR',674,'SM','San Marino'),
-	 ('STP',678,'ST','Sao Tome and Principe'),
-	 ('SAU',682,'SA','Saudi Arabia'),
-	 ('SEN',686,'SN','Senegal'),
-	 ('SRB',688,'RS','Serbia'),
-	 ('SYC',690,'SC','Seychelles'),
-	 ('SLE',694,'SL','Sierra Leone'),
-	 ('SGP',702,'SG','Singapore'),
-	 ('SVK',703,'SK','Slovakia'),
-	 ('SVN',705,'SI','Slovenia'),
-	 ('SLB',90,'SB','Solomon Islands'),
-	 ('SOM',706,'SO','Somalia'),
-	 ('ZAF',710,'ZA','South Africa'),
-	 ('SSD',728,'SS','South Sudan'),
-	 ('ESP',724,'ES','Spain'),
-	 ('LKA',144,'LK','Sri Lanka'),
-	 ('SDN',729,'SD','Sudan'),
-	 ('SUR',740,'SR','Suriname'),
-	 ('SJM',744,'SJ','Svalbard and Jan Mayen'),
-	 ('SWE',752,'SE','Sweden'),
-	 ('CHE',756,'CH','Switzerland'),
-	 ('SYR',760,'SY','Syrian Arab Republic'),
-	 ('TJK',762,'TJ','Tajikistan'),
-	 ('TZA',834,'TZ','Tanzania, United Republic of'),
-	 ('THA',764,'TH','Thailand'),
-	 ('TLS',626,'TL','Timor-Leste'),
-	 ('TGO',768,'TG','Togo'),
-	 ('TON',776,'TO','Tonga'),
-	 ('TTO',780,'TT','Trinidad and Tobago'),
-	 ('TUN',788,'TN','Tunisia'),
-	 ('TUR',792,'TR','Türkiye'),
-	 ('TKM',795,'TM','Turkmenistan'),
-	 ('TCA',796,'TC','Turks and Caicos Islands'),
-	 ('TUV',798,'TV','Tuvalu'),
-	 ('UGA',800,'UG','Uganda'),
-	 ('UKR',804,'UA','Ukraine'),
-	 ('ARE',784,'AE','United Arab Emirates'),
-	 ('GBR',826,'GB','United Kingdom of Great Britain and Northern Ireland'),
-	 ('USA',840,'US','United States of America'),
-	 ('URY',858,'UY','Uruguay'),
-	 ('UZB',860,'UZ','Uzbekistan'),
-	 ('VUT',548,'VU','Vanuatu'),
-	 ('VEN',862,'VE','Venezuela'),
-	 ('VNM',704,'VN','Vietnam');
-INSERT INTO securities.country (alpha_3,id,alpha_2,"name") VALUES
-	 ('VGB',92,'VG','Virgin Islands (British)'),
-	 ('VIR',850,'VI','Virgin Islands (U.S.)'),
-	 ('WLF',876,'WF','Wallis and Futuna'),
-	 ('ESH',732,'EH','Western Sahara'),
-	 ('YEM',887,'YE','Yemen'),
-	 ('ZMB',894,'ZM','Zambia'),
-	 ('ZWE',716,'ZW','Zimbabwe');
-
-CREATE TABLE IF NOT EXISTS securities.country_currency (
-    country_alpha_3 char(3) NOT NULL,
-    currency_code char(4) NOT NULL,
-	country_currency char(8) default
-    start_date date DEFAULT NULL,
-    end_date date DEFAULT NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-    CONSTRAINT pk_country_currency
-    PRIMARY KEY(country_alpha_3, currency_code),
-    CONSTRAINT fk_country_currency_currency
-        FOREIGN KEY(currency_code)
-        REFERENCES securities.currency(code)
-        ON DELETE NO ACTION,
-    CONSTRAINT fk_country_currency_country
-        FOREIGN KEY(country_alpha_3)
-        REFERENCES securities.country(alpha_3)
-        ON DELETE NO ACTION
-    );
-
-INSERT INTO securities.country_currency (country_alpha_3,currency_code) VALUES
-	 ('ABW','AWG '),
-	 ('AFG','AFN '),
-	 ('AGO','AOA '),
-	 ('ALB','ALL '),
-	 ('AND','EUR '),
-	 ('ARE','AED '),
-	 ('ARG','ARS '),
-	 ('ARM','AMD '),
-	 ('ATG','XCD '),
-	 ('AUS','AUD '),
-	 ('AUT','EUR '),
-	 ('AZE','AZN '),
-	 ('BDI','BIF '),
-	 ('BEL','EUR '),
-	 ('BEN','XOF '),
-	 ('BFA','XOF '),
-	 ('BGD','BDT '),
-	 ('BGR','BGN '),
-	 ('BHR','BHD '),
-	 ('BHS','BSD '),
-	 ('BIH','BAM '),
-	 ('BLM','EUR '),
-	 ('BLR','BYN '),
-	 ('BLZ','BZD '),
-	 ('BOL','BOB '),
-	 ('BOL','BOV '),
-	 ('BRA','BRL '),
-	 ('BRB','BBD '),
-	 ('BRN','BND '),
-	 ('BTN','BTN '),
-	 ('BTN','INR '),
-	 ('BWA','BWP '),
-	 ('CAF','XAF '),
-	 ('CAN','CAD '),
-	 ('CHE','CHE '),
-	 ('CHE','CHF '),
-	 ('CHE','CHW '),
-	 ('CHL','CLF '),
-	 ('CHL','CLP '),
-	 ('CHN','CNY '),
-	 ('CIV','XOF '),
-	 ('CMR','XAF '),
-	 ('COD','CDF '),
-	 ('COG','XAF '),
-	 ('COL','COP '),
-	 ('COL','COU '),
-	 ('COM','KMF '),
-	 ('CPV','CVE '),
-	 ('CRI','CRC '),
-	 ('CUB','CUC '),
-	 ('CUB','CUP '),
-	 ('CYP','EUR '),
-	 ('CZE','CZK '),
-	 ('DEU','EUR '),
-	 ('DJI','DJF '),
-	 ('DMA','XCD '),
-	 ('DNK','DKK '),
-	 ('DOM','DOP '),
-	 ('DZA','DZD '),
-	 ('ECU','USD '),
-	 ('EGY','EGP '),
-	 ('ERI','ERN '),
-	 ('ESH','MAD '),
-	 ('ESP','EUR '),
-	 ('EST','EUR '),
-	 ('ETH','ETB '),
-	 ('FIN','EUR '),
-	 ('FJI','FJD '),
-	 ('FRA','EUR '),
-	 ('FSM','USD '),
-	 ('GAB','XAF '),
-	 ('GBR','GBP '),
-	 ('GEO','GEL '),
-	 ('GGY','GBP '),
-	 ('GHA','GHS '),
-	 ('GIB','GIP '),
-	 ('GIN','GNF '),
-	 ('GLP','EUR '),
-	 ('GMB','GMD '),
-	 ('GNB','XOF '),
-	 ('GNQ','XAF '),
-	 ('GRC','EUR '),
-	 ('GRD','XCD '),
-	 ('GTM','GTQ '),
-	 ('GUM','USD '),
-	 ('GUY','GYD '),
-	 ('HKG','HKD '),
-	 ('HND','HNL '),
-	 ('HRV','HRK '),
-	 ('HTI','HTG '),
-	 ('HTI','USD '),
-	 ('HUN','HUF '),
-	 ('IDN','IDR '),
-	 ('IND','INR '),
-	 ('IRL','EUR '),
-	 ('IRN','IRR '),
-	 ('IRQ','IQD '),
-	 ('ISL','ISK '),
-	 ('ISR','ILS '),
-	 ('ITA','EUR ');
-INSERT INTO securities.country_currency (country_alpha_3,currency_code) VALUES
-	 ('JAM','JMD '),
-	 ('JOR','JOD '),
-	 ('JPN','JPY '),
-	 ('KAZ','KZT '),
-	 ('KEN','KES '),
-	 ('KGZ','KGS '),
-	 ('KHM','KHR '),
-	 ('KIR','AUD '),
-	 ('KNA','XCD '),
-	 ('KOR','KRW '),
-	 ('KWT','KWD '),
-	 ('LAO','LAK '),
-	 ('LBN','LBP '),
-	 ('LBR','LRD '),
-	 ('LBY','LYD '),
-	 ('LCA','XCD '),
-	 ('LIE','CHF '),
-	 ('LKA','LKR '),
-	 ('LSO','LSL '),
-	 ('LSO','ZAR '),
-	 ('LTU','EUR '),
-	 ('LUX','EUR '),
-	 ('LVA','EUR '),
-	 ('MAR','MAD '),
-	 ('MCO','EUR '),
-	 ('MDA','MDL '),
-	 ('MDG','MGA '),
-	 ('MDV','MVR '),
-	 ('MEX','MXN '),
-	 ('MEX','MXV '),
-	 ('MHL','USD '),
-	 ('MKD','MKD '),
-	 ('MLI','XOF '),
-	 ('MLT','EUR '),
-	 ('MMR','MMK '),
-	 ('MNE','EUR '),
-	 ('MNG','MNT '),
-	 ('MOZ','MZN '),
-	 ('MRT','MRU '),
-	 ('MUS','MUR '),
-	 ('MWI','MWK '),
-	 ('MYS','MYR '),
-	 ('NAM','NAD '),
-	 ('NAM','ZAR '),
-	 ('NER','XOF '),
-	 ('NGA','NGN '),
-	 ('NIC','NIO '),
-	 ('NLD','EUR '),
-	 ('NOR','NOK '),
-	 ('NPL','NPR '),
-	 ('NRU','AUD '),
-	 ('NZL','NZD '),
-	 ('OMN','OMR '),
-	 ('PAK','PKR '),
-	 ('PAN','PAB '),
-	 ('PAN','USD '),
-	 ('PER','PEN '),
-	 ('PHL','PHP '),
-	 ('PLW','USD '),
-	 ('PNG','PGK '),
-	 ('POL','PLN '),
-	 ('PRK','KPW '),
-	 ('PRT','EUR '),
-	 ('PRY','PYG '),
-	 ('QAT','QAR '),
-	 ('ROU','RON '),
-	 ('RUS','RUB '),
-	 ('RWA','RWF '),
-	 ('SAU','SAR '),
-	 ('SDN','SDG '),
-	 ('SEN','XOF '),
-	 ('SGP','SGD '),
-	 ('SJM','NOK '),
-	 ('SLB','SBD '),
-	 ('SLE','SLL '),
-	 ('SLV','SVC '),
-	 ('SLV','USD '),
-	 ('SMR','EUR '),
-	 ('SOM','SOS '),
-	 ('SRB','RSD '),
-	 ('SSD','SSP '),
-	 ('STP','STN '),
-	 ('SUR','SRD '),
-	 ('SVK','EUR '),
-	 ('SVN','EUR '),
-	 ('SWE','SEK '),
-	 ('SWZ','SZL '),
-	 ('SYC','SCR '),
-	 ('SYR','SYP '),
-	 ('TCA','USD '),
-	 ('TCD','XAF '),
-	 ('TGO','XOF '),
-	 ('THA','THB '),
-	 ('TJK','TJS '),
-	 ('TKM','TMT '),
-	 ('TLS','USD '),
-	 ('TON','TOP '),
-	 ('TTO','TTD '),
-	 ('TUN','TND '),
-	 ('TUR','TRY ');
-INSERT INTO securities.country_currency (country_alpha_3,currency_code) VALUES
-	 ('TUV','AUD '),
-	 ('TZA','TZS '),
-	 ('UGA','UGX '),
-	 ('UKR','UAH '),
-	 ('URY','UYI '),
-	 ('URY','UYU '),
-	 ('URY','UYW '),
-	 ('USA','USD '),
-	 ('USA','USN '),
-	 ('UZB','UZS '),
-	 ('VAT','EUR '),
-	 ('VCT','XCD '),
-	 ('VEN','VES '),
-	 ('VGB','USD '),
-	 ('VIR','USD '),
-	 ('VNM','VND '),
-	 ('VUT','VUV '),
-	 ('WLF','XPF '),
-	 ('WSM','WST '),
-	 ('YEM','YER '),
-	 ('ZAF','ZAR '),
-	 ('ZMB','ZMW '),
-	 ('ZWE','ZWL ');
-
-UPDATE securities.country_currency SET country_currency = CONCAT(country_alpha_3, '-', currency_code);
-
-CREATE TABLE IF NOT EXISTS securities.exchange (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code char(8) UNIQUE NOT NULL,
-    acronym varchar(32) NULL,
-    name varchar(255) NOT NULL,
-    definition varchar(1000) DEFAULT NULL,
-    country_alpha_3 char(3) NOT NULL,
-    currency_code char(4) NOT NULL,
-    city varchar(255) NULL,
-    start_date date DEFAULT NULL,
-    end_date date DEFAULT NULL,
-    timezone_offset time NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-    CONSTRAINT fk_exchange_country_currency
-        FOREIGN KEY(country_alpha_3, currency_code)
-        REFERENCES securities.country_currency(country_alpha_3, currency_code)
-        ON DELETE NO ACTION);
-
-COMMENT ON COLUMN securities.exchange.code IS 'This is the market identifier code (MIC). https://www.iso20022.org/market-identifier-codes';
-
-INSERT INTO securities.exchange (code, acronym, city, name, definition, country_alpha_3, currency_code, start_date, end_date) VALUES
-	('XASX', 'ASX', 'SYDNEY', 'Australian Securities Exchange', 'ASX stands for Australian Securities Exchange. It was created by the merger of the Australian Stock Exchange and the Sydney Futures Exchange in July 2006 and is one of the world’s top-10 listed exchange groups measured by market capitalisation.', 'AUS', 'AUD', '2012-05-28', NULL),
-	('XNAS', 'NASDAQ', 'NEW YORK', 'NASDAQ', 'A global electronic marketplace for buying and selling securities', 'USA', 'USD', '2005-06-27', NULL),
-	('XNYS', 'NYSE', 'NEW YORK', 'New York Stock Exchange', 'The New York Stock Exchange (NYSE) is a stock exchange located in New York City that is the largest equities-based exchange in the world, based on the total market capitalization of its listed securities.', 'USA', 'USD', '2005-05-23', NULL),
-	('XASE', 'AMEX', 'NEW YORK', 'NYSE Market, LLC', 'Drawing on its heritage as the American Stock Exchange, NYSE American is an exchange designed for growing companies, and offers investors greater choice in how they trade. NYSE American is a competitively priced venue that blends unique features derived from the NYSE, such as electronic Designated Market Makers (e-DMMs) with quoting obligations for each NYSE American-listed company, with NYSE Arcas fully electronic price/time priority execution model.', 'USA', 'USD', '2009-05-25', NULL),
-	('BATS', 'BATS', 'CHICAGO', 'CBOE BZX', 'BZX Exchange (previously BATS Exchange). is located in United States and is regulated by the Securities and Exchange Commission (SEC) and FINRA.', 'USA', 'USD', '2008-11-24', NULL),
-	('ARCX', 'NYSE', 'NEW YORK', 'NYSE Arca, Inc.', 'NYSE Arca is an electronic securities exchange in the U.S. on which exchange-traded products (ETPs) and equities are listed. The exchange specializes in ETP listings, which include exchange-traded funds (ETFs), exchange-traded notes (ETNs), and exchange-traded vehicles (ETVs).', 'USA', 'USD', '2006-09-25', NULL),
-	('XCBO', 'CBOE', 'CHICAGO', 'CBOE GLOBAL MARKETS INC.', 'CBOE Options Exchange.', 'USA', 'USD', '2008-07-28', NULL);
-
-CREATE TABLE securities.ticker_type (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-	start_date date DEFAULT NULL,
-    end_date date DEFAULT NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone);
-
-COMMENT ON TABLE securities.ticker_type IS 'An identifier for a group of similar financial instruments.';
-
-INSERT INTO securities.ticker_type (code, description) VALUES
-    ('crypto', Null),
-    ('fx', Null),
-    ('index', Null),
-    ('option', Null),
-    ('stock', Null),
-    ('bullion', Null),
-    ('etp', Null);
-
-CREATE TABLE securities.watchlist_type (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255) UNIQUE NOT NULL,
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
-
-COMMENT ON TABLE securities.watchlist_type IS 'Used to define the category for a watchlist. e.g. Index, Investment style (for ETPs), Portfolio';
-
-DELETE FROM securities.watchlist_type;
-INSERT INTO securities.watchlist_type (code, description, start_date, end_date) VALUES
-    ('Sector', 'Stocks that are in a specific Sector', '2024-07-08', NULL),
-    ('Summary', 'Summary', '2024-07-08', NULL),
-    ('Market indices', 'Indexes that reflect a specific market', '2024-07-08', NULL),
-	('GICS Sector Indices', 'Indices that reflect a specific GICS sectors.', '2024-07-08', NULL),
-	('Broker accounts', 'Stocks held under specifc brokers.', '2024-07-08', NULL);
-
-CREATE TABLE IF NOT EXISTS securities.watchlist (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    watchlist_type_id integer NOT NULL,
-    description varchar(1000) NULL,
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-	CONSTRAINT fk_watchlist_watchlist_type
-        FOREIGN KEY(watchlist_type_id)
-        REFERENCES securities.watchlist_type(id)
-        ON DELETE NO ACTION);
-
-COMMENT ON TABLE securities.watchlist IS 'Used to group a set of securities together. Securities may be in multiple watchlists.';
-
-DELETE FROM securities.watchlist;
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'AUS Stock Sectors', id, 'Indices that reflect the AUS GICS sectors.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'GICS Sector Indices';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'US Stock Sectors', id, 'Indices that reflect the US sectors.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'GICS Sector Indices';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'AUS Indices', id, 'Indices that reflect the AUS market.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'Market indices';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'US Indices', id, 'Indices that reflect the US market.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'Market indices';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'AUS Summary', id, 'A summary of the AUS market.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'Summary';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'US Summary', id, 'A summary of the AUS market.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'Summary';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'Interactive Brokers', id, 'Stocks held at Interactive Brokers.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'Broker accounts';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'CommSec - Rob & Sue', id, 'Stocks held at CommSec under Rob & Sue.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'Broker accounts';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'CommSec - SuperBebbs', id, 'Stocks held at CommSec under SuperBebbs.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'Broker accounts';
-INSERT INTO securities.watchlist (code, watchlist_type_id, description, start_date, end_date)
-	SELECT 'eBroker - SuperBebbs', id, 'Stocks held at eBroker under SuperBebbs.', '2024-07-08', NULL FROM securities.watchlist_type where code = 'Broker accounts';
-
-CREATE TABLE securities.ticker (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    ticker varchar(32) NOT NULL,
-    yahoo_ticker varchar(32) NULL,
-    figi char(12) NULL,
-    name varchar(255) NULL,
-	currency_code char(4) NULL,
-    gics_sector_code char(2) NULL,
-    gics_industry_group_code char(4) NULL,
-    gics_industry_code char(6) NULL,
-    gics_sub_industry_code char(8) NULL,
-    exchange_id integer NULL,
-    listed_date date NULL,
-    delisted_utc timestamp NULL, 
-    listcorp_url varchar(255) NULL,
-    ticker_type_id integer NOT NULL,
-	underlying_ticker varchar(32),
-	call_put char(1) NULL,
-	strike numeric(19,4) NULL,
-	expiry_date date NULL,
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-	CONSTRAINT unique_ticker 
-		UNIQUE (exchange_id, ticker),
-    CONSTRAINT fk_ticker_exchange
-        FOREIGN KEY(exchange_id)
-        REFERENCES securities.exchange(id)
-        ON DELETE NO ACTION,
-    CONSTRAINT fk_ticker_ticker_type
-        FOREIGN KEY(ticker_type_id)
-        REFERENCES securities.ticker_type(id)
-        ON DELETE NO ACTION,
-    CONSTRAINT fk_ticker_sector
-        FOREIGN KEY(gics_sector_code)
-        REFERENCES securities.gics_sector(code)
-        ON DELETE NO ACTION,
-    CONSTRAINT fk_ticker_industry_group
-        FOREIGN KEY(gics_industry_group_code)
-        REFERENCES securities.gics_industry_group(code)
-        ON DELETE NO ACTION,        
-    CONSTRAINT fk_ticker_industry
-        FOREIGN KEY(gics_industry_code)
-        REFERENCES securities.gics_industry(code)
-        ON DELETE NO ACTION,
-    CONSTRAINT fk_ticker_sub_industry
-        FOREIGN KEY(gics_sub_industry_code)
-        REFERENCES securities.gics_sub_industry(code)
-        ON DELETE NO ACTION);
-
-COMMENT ON COLUMN securities.ticker.name IS 'The name of the asset. For stocks/equities this will be the companies registered name. For crypto/fx this will be the name of the currency or coin pair.';
-COMMENT ON COLUMN securities.ticker.ticker IS 'The exchange symbol that this item is traded under.';
-
-CREATE TABLE IF NOT EXISTS securities.watchlist_ticker (
-	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    watchlist_id integer NOT NULL,
-    ticker_id integer NOT NULL,
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-    CONSTRAINT fk_watchlist_ticker_watchlist
-        FOREIGN KEY(watchlist_id) 
-        REFERENCES securities.watchlist(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_watchlist_ticker_ticker
-        FOREIGN KEY(ticker_id) 
-        REFERENCES securities.ticker(id)
-        ON DELETE SET NULL,
-    CONSTRAINT unique_watchlist_ticker
-		UNIQUE (watchlist_id, ticker_id));
-
-COMMENT ON TABLE securities.watchlist_ticker IS 'Used to store the tickers in each watchlist.';
-
-CREATE TABLE securities.data_vendor (
-    id integer PRIMARY KEY,
-    name varchar(64) NOT NULL,
-    website_url varchar(255) NULL,
-    support_email varchar(255) NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone);
-
-INSERT INTO securities.data_vendor (id, name, website_url, support_email) VALUES
-	(1, 'Yahoo', 'https://au.finance.yahoo.com/', Null),
-	(2, 'polygon.io', 'https://polygon.io/', 'support@polygon.io'),
-	(3, 'Interactive Brokers', 'https://www.interactivebrokers.com.au/en/home.php', Null);
-
-CREATE TABLE securities.ohlcv (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    data_vendor_id integer NOT NULL,
-    ticker_id integer NULL,
-    date date NOT NULL,
-    open numeric(19,4) NULL,
-    high numeric(19,4) NULL,
-    low numeric(19,4) NULL,
-    close numeric(19,4) NULL,
-    adj_close numeric(19,4) NULL,
-    volume bigint NULL,
-    volume_weighted_average_price numeric(19,4) NULL,
-	transactions integer NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-	CONSTRAINT fk_ohlcv_data_vendor
-        FOREIGN KEY(data_vendor_id)
-        REFERENCES securities.data_vendor(id)
-        ON DELETE NO ACTION,
-    CONSTRAINT fk_ohlcv_ticker
-        FOREIGN KEY(ticker_id)
-        REFERENCES securities.ticker(id)
-        ON DELETE CASCADE,
-	CONSTRAINT unique_ohlcv 
-		UNIQUE (data_vendor_id, ticker_id, date));
-
-COMMENT ON COLUMN securities.ohlcv.close IS 'The close price for the symbol in the given time period.';
-COMMENT ON COLUMN securities.ohlcv.high IS 'The highest price for the symbol in the given time period.';
-COMMENT ON COLUMN securities.ohlcv.low IS 'The lowest price for the symbol in the given time period.';
-COMMENT ON COLUMN securities.ohlcv.open IS 'The open price for the symbol in the given time period.';
-COMMENT ON COLUMN securities.ohlcv.volume IS 'The trading volume of the symbol in the given time period.';
-COMMENT ON COLUMN securities.ohlcv.volume_weighted_average_price IS 'The volume weighted average price.';
-
-CREATE TABLE securities.dividend_type (
-    code char(2) PRIMARY KEY,
-    description varchar(255),
-	start_date date DEFAULT NULL,
-    end_date date DEFAULT NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone);
-
-COMMENT ON TABLE securities.dividend_type IS 'The type of dividend.';
-
-COMMENT ON COLUMN securities.dividend_type.code IS 'A code used by to refer to this dividend type.';
-COMMENT ON COLUMN securities.dividend_type.description IS 'A short description of this dividend type.';
-
-INSERT INTO securities.dividend_type (code, description) VALUES
-    ('CD', 'Dividend on consistent schedule'),
-    ('SC', 'Special cash dividend'),
-    ('LT', 'Long-Term capital gain distribution'),
-    ('ST', 'Short-Term capital gain distribution');
-
-CREATE TABLE securities.split (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    execution_date timestamp NULL,
-    split_from integer NULL,
-    split_to integer NULL,
-	ticker_id integer NULL,
-    ticker varchar(32) NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-	CONSTRAINT unique_split
-		UNIQUE (ticker, execution_date, split_from, split_to));
-
-COMMENT ON TABLE securities.split IS 'Split contains data for a historical stock split, including the ticker symbol, the execution date, and the factors of the split ratio.';
-COMMENT ON COLUMN securities.split.execution_date IS 'The execution date of the stock split. On this date the stock split was applied.';
-COMMENT ON COLUMN securities.split.split_from IS 'The second number in the split ratio. For example: In a 2-for-1 split, split_from would be 1.';
-COMMENT ON COLUMN securities.split.split_to IS 'The first number in the split ratio. For example: In a 2-for-1 split, split_to would be 2.';
-COMMENT ON COLUMN securities.split.ticker IS 'The ticker symbol of the stock split.';
-
-CREATE TABLE securities.dividend (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    cash_amount numeric(19,4) NULL,
-    currency varchar(50) NULL,
-    declaration_date timestamp NULL,
-    type varchar(32) NULL,
-    ex_dividend_date timestamp NULL,
-    frequency integer NULL,
-    pay_date timestamp NULL,
-    record_date timestamp NULL,
-	ticker_id integer NULL,
-    ticker varchar(32) NULL,
-    created_date timestamp with time zone DEFAULT current_timestamp,
-    last_updated_date timestamp with time zone,
-	CONSTRAINT fk_dividend_dividend_type
-        FOREIGN KEY(type)
-        REFERENCES securities.broker(id)
-        ON DELETE SET NULL,
-
-	CONSTRAINT unique_dividend 
-		UNIQUE (cash_amount, ticker_id, ex_dividend_date, type));
-
-COMMENT ON COLUMN securities.dividend.cash_amount IS 'The cash amount of the dividend per share owned.';
-COMMENT ON COLUMN securities.dividend.currency IS 'The currency in which the dividend is paid.';
-COMMENT ON COLUMN securities.dividend.declaration_date IS 'The date that the dividend was announced.';
-COMMENT ON COLUMN securities.dividend.type IS 'The type of dividend. Dividends that have been paid and/or are expected to be paid on consistent schedules are denoted as CD. Special Cash dividends that have been paid that are infrequent or unusual, and/or can not be expected to occur in the future are denoted as SC. Long-Term and Short-Term capital gain distributions are denoted as LT and ST, respectively.';
-COMMENT ON COLUMN securities.dividend.ex_dividend_date IS 'The date that the stock first trades without the dividend, determined by the exchange.';
-COMMENT ON COLUMN securities.dividend.frequency IS 'The number of times per year the dividend is paid out. Possible values are 0 (one-time), 1 (annually), 2 (bi-annually), 4 (quarterly), and 12 (monthly).';
-COMMENT ON COLUMN securities.dividend.pay_date IS 'The date that the dividend is paid out.';
-COMMENT ON COLUMN securities.dividend.record_date IS 'The date that the stock must be held to receive the dividend, set by the company.';
-COMMENT ON COLUMN securities.dividend.ticker IS 'The ticker symbol of the dividend.';
-
-CREATE TABLE securities.broker (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
-
-COMMENT ON TABLE securities.broker IS 'An entity through which you can buy and sell securities.';
-
-DELETE FROM securities.broker;
-INSERT INTO securities.broker (code, description) VALUES
-    ('IB', 'Interactive Brokers'),
-    ('Commsec', 'Commonwealth Securities'),
-    ('ABC', 'ABC Bullion'),
-    ('Swyft', 'Swyft'),
-    ('eBroker', 'eBroker');
-
-CREATE TABLE securities.portfolio (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
-
-COMMENT ON TABLE securities.portfolio IS 'A grouping of accounts for specific purpose.';
-
-DELETE FROM securities.portfolio;
-INSERT INTO securities.portfolio (code, description) VALUES
-    ('Rob and Sue', 'Rob and Sue'),
-    ('Paper Trade', 'Paper Trade'),
-    ('Superbebbs', 'Superbebbs');
-
-CREATE TABLE securities.account (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    broker_id integer NULL, 
-    portfolio_id integer NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp,
-    CONSTRAINT fk_account_broker
-        FOREIGN KEY(broker_id)
-        REFERENCES securities.broker(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_account_portfolio
-        FOREIGN KEY(portfolio_id)
-        REFERENCES securities.portfolio(id)
-        ON DELETE SET NULL,
-        CONSTRAINT unique_account
-		UNIQUE (broker_id, portfolio_id));
-
-COMMENT ON TABLE securities.account IS 'An account at a broker for a specific portfolio.';
-
-DELETE FROM securities.account;
-INSERT INTO securities.account (code, broker_id, description)
-	SELECT 'Rob and Sue', id, Null FROM securities.broker where code = 'Commsec';
-INSERT INTO securities.account (code, broker_id, description)
-	SELECT 'Superbebbs Commsec', id, Null FROM securities.broker where code = 'Commsec';
-INSERT INTO securities.account (code, broker_id, description)
-	SELECT 'Superbebbs eBroker', id, Null FROM securities.broker where code = 'eBroker';
-INSERT INTO securities.account (code, broker_id, description)
-	SELECT 'Rob', id, Null FROM securities.broker where code = 'IB';
-INSERT INTO securities.account (code, broker_id, description)
-	SELECT 'Bullion', id, Null FROM securities.broker where code = 'ABC';
-INSERT INTO securities.account (code, broker_id, description)
-	SELECT 'Crypto', id, Null FROM securities.broker where code = 'Swyft';
-INSERT INTO securities.account (code, broker_id, description)
-	SELECT 'Paper Trade', id, Null FROM securities.broker where code = 'IB';
-
-CREATE TABLE securities.analyst (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
-
-COMMENT ON TABLE securities.analyst IS 'An entity that gives stock recommendation.';
-
-DELETE FROM securities.analyst;
-INSERT INTO securities.analyst (code, description) VALUES
-    ('Stock Earnings', Null),
-    ('InvestorPlace', Null),
-    ('Fat Tail Investment Research', Null),
-    ('Motley Fool', Null);
-
-CREATE TABLE securities.newsletter (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    analyst_id integer NULL, 
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp,
-    CONSTRAINT fk_newsletter_analyst
-        FOREIGN KEY(analyst_id)
-        REFERENCES securities.analyst(id)
-        ON DELETE SET NULL);
-
-COMMENT ON TABLE securities.newsletter IS 'A stock recommendation newsletter.';
-
-DELETE FROM securities.newsletter;
-INSERT INTO securities.newsletter (code, analyst_id, description)
-	SELECT 'Weekly Winners', id, Null FROM securities.analyst where code = 'Stock Earnings';
-INSERT INTO securities.newsletter (code, analyst_id, description)
-	SELECT 'Innovation Investor', id, Null FROM securities.analyst where code = 'InvestorPlace';        
-INSERT INTO securities.newsletter (code, analyst_id, description)
-	SELECT 'Exponential Stock Investor', id, Null FROM securities.analyst where code = 'Fat Tail Investment Research';
-INSERT INTO securities.newsletter (code, analyst_id, description)
-	SELECT 'Income Extra', id, Null FROM securities.analyst where code = 'Motley Fool';
-INSERT INTO securities.newsletter (code, analyst_id, description)
-	SELECT 'Preferred Spotlight', id, Null FROM securities.analyst where code = 'InvestorPlace';
-
-
-CREATE TABLE securities.action (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
-
-COMMENT ON TABLE securities.action IS 'The type of order being submitted.';
-
-DELETE FROM securities.action;
-INSERT INTO securities.action (code, description) VALUES
-    ('Buy to Open', Null),
-    ('Sell to Open', Null),
-    ('Buy to Close', Null),
-    ('Sell to Close', Null),
-    ('Buy to Cover', Null),
-    ('Sell Short', Null);
-
-CREATE TABLE IF NOT EXISTS securities.trade_type
-(
-    id integer PRIMARY KEY  GENERATED ALWAYS AS IDENTITY,
-    code character varying(64) UNIQUE NOT NULL,
-    description character varying(1000),
-    created_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    last_updated_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    the_options_playbook_url character varying(254),
-    market_outlook character varying(64),
-    risk character varying(64),
-    reward character varying(64),
-    increase_in_volatility character varying(64),
-    options_trading_iq_url character varying(254),
-    quantified_strategies_url character varying(254),
-    options_industry_council_url character varying(254),
-    tasty_live_url character varying(254),
-    option_alpha_url character varying(254),
-    time_erosion character varying(64),
-    break_even_point character varying(1000)
+WITH subquery AS (
+    SELECT i.id, i.code
+    FROM  securities.gics_industry i, securities.gics_sub_industry s WHERE i.code = s.industry_code 
 )
+UPDATE securities.gics_sub_industry
+SET industry_id = subquery.id
+FROM subquery
+WHERE securities.gics_sub_industry.industry_code = subquery.code;
 
-COMMENT ON TABLE securities.trade_type IS 'The trade_type being used for the trade.';
 
-CREATE TABLE securities.strategy (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
+ALTER TABLE securities.ticker
+    ADD COLUMN IF NOT EXISTS gics_sector_id integer,
+    ADD COLUMN IF NOT EXISTS gics_industry_group_id integer,
+    ADD COLUMN IF NOT EXISTS gics_industry_id integer,
+    ADD COLUMN IF NOT EXISTS gics_sub_industry_id integer;
 
-COMMENT ON TABLE securities.strategy IS 'The strategy being used for the trade.';
+ALTER TABLE securities.ticker
+    DROP COLUMN IF EXISTS gics_sector_code,
+    DROP COLUMN IF EXISTS gics_industry_group_code,
+    DROP COLUMN IF EXISTS gics_industry_code,
+    DROP COLUMN IF EXISTS gics_sub_industry_code;
 
-DELETE FROM securities.strategy;
-INSERT INTO securities.strategy (code, description) VALUES
-    ('MA Crossover', Null),
-    ('Dividend Income', Null),
-    ('Momentum', Null);
-
-CREATE TABLE securities.trade_status (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
-
-COMMENT ON TABLE securities.trade_status IS 'Represents the current stage of the trade. A trade can one or several legs (especially for options)';
-
-DELETE FROM securities.trade_status;
-INSERT INTO securities.trade_status (code, description) VALUES
-    ('Planning', 'Still working out the details of the trade'),
-    ('Ready to order', 'The trade is ready to for orders to be placed'),
-    ('In progress', 'Initial orders for the trade have been submitted'),
-    ('Finalised', 'All orders and legs are closed');
-
-CREATE TABLE securities.order_status (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
-
-COMMENT ON TABLE securities.order_status IS 'Represents the current stage of the order';
-
-DELETE FROM securities.order_status;
-INSERT INTO securities.order_status (code, description) VALUES
-    ('Not ready to order', 'Still working out the details of the order.'),
-    ('Not ordered', 'The order has not been submitted to the exchange.'),
-    ('Ordered', 'The order has been submitted but has not been filled.'),
-    ('Open', 'The order has been filled.'),
-    ('Closed', 'The order has been finalised.');
-
-CREATE TABLE securities.leg_status (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code varchar(32) UNIQUE NOT NULL,
-    description varchar(255),
-    start_date date NULL,
-    end_date date NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp);
-
-COMMENT ON TABLE securities.leg_status IS 'Represents the current stage of a leg of a trade.';
-
-DELETE FROM securities.leg_status;
-INSERT INTO securities.leg_status (code, description) VALUES
-    ('Not ready to order', 'Still working out the details of the leg.'),
-    ('Ready to order', 'The leg is ready to be submitted'),
-    ('Ordered', 'The leg has been submitted'),
-    ('Filled', 'The leg has been filled'),
-    ('Closed', 'The leg has been finalised.');
-
-CREATE TABLE securities.trade (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    portfolio_id integer NOT NULL,
-    strategy_id integer NOT NULL,
-    trade_type_id integer NOT NULL,
-    trade_status_id integer NOT NULL,
-    name varchar(32) NOT NULL,
-    description varchar(1000) NULL,
-    entry_reason varchar(1000) NULL,
-    exit_criteria varchar(1000) NULL,
-    notes varchar(255) NULL,
-    mistake char(1) null,
-    risk_amount numeric(19,4) NULL,
-    risk_percent numeric(4,1) NULL,
-    return_amount numeric(19,4) NULL,
-    return_percent numeric(4,1) NULL,  
-    return_r varchar(32) NULL,
-    risk_reward_ratio varchar(32) NULL,
-    newsletter_id integer NULL,
-    newsletter_date date NULL,
-    newsletter_time time NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp, 
-    CONSTRAINT fk_trade_strategy
-        FOREIGN KEY(strategy_id)
-        REFERENCES securities.strategy(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_trade_trade_type
-        FOREIGN KEY(trade_type_id)
-        REFERENCES securities.trade_type(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_trade_portfolio
-        FOREIGN KEY(portfolio_id)
-        REFERENCES securities.portfolio(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_trade_status
-        FOREIGN KEY(trade_status_id)
-        REFERENCES securities.trade_status(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_trade_newsletter
-        FOREIGN KEY(newsletter_id)
-        REFERENCES securities.newsletter(id)
-        ON DELETE SET NULL);
-
-COMMENT ON TABLE securities.trade IS 'The trading plan. See https://investor.com/trading/best-trading-journals';
-
-CREATE TABLE securities.order (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    trade_id integer NOT NULL,
-    account_id integer NOT NULL,
-    order_status_id integer NOT NULL,
-    action_id integer NOT NULL,
-	name varchar(32) NOT NULL,
-	description varchar(255) NULL,
-    limit_price numeric(19,4) NULL,
-    quantity numeric(19,0) NULL,
-	stop_price numeric(19,4) NULL,
-	target_price numeric(19,4) NULL,
-    order_date date NULL,
-    order_time time NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp,
-    CONSTRAINT fk_order_trade
-        FOREIGN KEY(trade_id)
-        REFERENCES securities.trade(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_order_account
-        FOREIGN KEY(account_id)
-        REFERENCES securities.account(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_order_order_status
-        FOREIGN KEY(order_status_id)
-        REFERENCES securities.order_status(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_order_action
-        FOREIGN KEY(action_id)
-        REFERENCES securities.action(id)
-        ON DELETE SET NULL);
-
-COMMENT ON TABLE securities.order IS 'An order placed on a specific account at a broker';
-
-CREATE TABLE securities.leg (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    trade_id integer NOT NULL,
-    order_id integer NOT NULL,
-    ticker_id integer NOT NULL,
-    leg_status_id integer NOT NULL,
-    action_id integer NOT NULL,
-    request_price numeric(19,4) NULL,
-    request_quantity numeric(19,0) NULL,
-	request_date timestamp NULL,
-	stop_price numeric(19,4) NULL,
-	target_price numeric(19,4) NULL,
-    description varchar(255) NULL,
-	actual_unit_price numeric(19,4) NULL,
-    actual_quantity numeric(19,0) NULL,
-    actual_date timestamp NULL,
-    stock_total numeric(19,4) NULL,
-    commission numeric(19,4) NULL,
-    tax numeric(19,4) NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp,
-    CONSTRAINT fk_leg_trade
-        FOREIGN KEY(trade_id)
-        REFERENCES securities.trade(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_leg_order
-        FOREIGN KEY(order_id)
-        REFERENCES securities.order(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_leg_ticker
-        FOREIGN KEY(ticker_id)
-        REFERENCES securities.ticker(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_leg_status
-        FOREIGN KEY(leg_status_id)
-        REFERENCES securities.leg_status(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_leg_action
-        FOREIGN KEY(action_id)
-        REFERENCES securities.action(id)
-        ON DELETE SET NULL);
-
-COMMENT ON TABLE securities.leg IS 'A trade is made up of one or more legs';
-
-CREATE TABLE securities.transaction (
-    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    trade_id integer NOT NULL,
-	order_id integer NOT NULL,
-    leg_id integer NOT NULL,
-    ticker_id integer NOT NULL,
-    action_id integer NOT NULL,
-    unit_price numeric(19,4) NULL,
-    quantity numeric(19,0) NULL,
-    stock_total numeric(19,4) NULL,
-    commission numeric(19,4) NULL,
-    tax numeric(19,4) NULL,
-    transaction_date date NULL,
-    transaction_time time NULL,
-    description varchar(255) NULL,
-    created_date timestamp DEFAULT current_timestamp,
-    last_updated_date timestamp DEFAULT current_timestamp,
-    CONSTRAINT fk_transaction_order
-        FOREIGN KEY(order_id)
-        REFERENCES securities.order(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_transaction_leg
-        FOREIGN KEY(leg_id)
-        REFERENCES securities.leg(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_transaction_trade
-        FOREIGN KEY(trade_id)
-        REFERENCES securities.trade(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_transaction_ticker
-        FOREIGN KEY(ticker_id)
-        REFERENCES securities.ticker(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_transaction_action
-        FOREIGN KEY(action_id)
-        REFERENCES securities.action(id)
-        ON DELETE SET NULL);
-
-COMMENT ON TABLE securities.transaction IS 'The actual transactions that take place to fill an order';
+ALTER TABLE securities.ticker
+    ADD CONSTRAINT fk_ticker_sector
+        FOREIGN KEY(gics_sector_id)
+        REFERENCES securities.gics_sector(id)
+        ON DELETE NO ACTION;
+ALTER TABLE securities.ticker
+    ADD CONSTRAINT fk_ticker_industry_group
+        FOREIGN KEY(gics_industry_group_id)
+        REFERENCES securities.gics_industry_group(id)
+        ON DELETE NO ACTION;
+ALTER TABLE securities.ticker
+    ADD CONSTRAINT fk_ticker_industry
+        FOREIGN KEY(gics_industry_id)
+        REFERENCES securities.gics_industry(id)
+        ON DELETE NO ACTION;
+ALTER TABLE securities.ticker
+    ADD CONSTRAINT fk_ticker_sub_industry
+        FOREIGN KEY(gics_sub_industry_id)
+        REFERENCES securities.gics_sub_industry(id)
+        ON DELETE NO ACTION;

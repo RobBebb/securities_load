@@ -11,7 +11,7 @@ import psycopg2
 
 # import psycopg2.extras
 # import pandas as pd
-module_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def add_dividends(conn):
@@ -21,7 +21,7 @@ def add_dividends(conn):
         conn - database connection
     """
 
-    module_logger.debug("Started")
+    logger.debug("Started")
 
     table = "securities.dividend"
 
@@ -46,15 +46,15 @@ def add_dividends(conn):
         EXCLUDED.ticker, CURRENT_TIMESTAMP)"""
     insert_stmt = f"INSERT INTO {table} ({columns}) {values} {conflict};"
 
-    module_logger.debug(f"Insert statement: {insert_stmt}")
+    logger.debug(f"Insert statement: {insert_stmt}")
     try:
         cur = conn.cursor()
         # add the rows from the dataframe to the table
         cur.execute(insert_stmt)
         conn.commit()
-        module_logger.info(f"Insert to table {table} successful.")
+        logger.info(f"Insert to table {table} successful.")
     except psycopg2.Error as error:
-        module_logger.error(f"Error while inserting tickers to {table}", error)
+        logger.exception("")
     finally:
         if conn:
             cur.close()
@@ -67,7 +67,7 @@ def add_splits(conn):
         conn - database connection
     """
 
-    module_logger.debug("Started")
+    logger.debug("Started")
 
     table = "securities.split"
 
@@ -87,16 +87,16 @@ def add_splits(conn):
         EXCLUDED.ticker, CURRENT_TIMESTAMP)"""
     insert_stmt = f"INSERT INTO {table} ({columns}) {values} {conflict};"
 
-    module_logger.debug(f"Insert statement: {insert_stmt}")
+    logger.debug(f"Insert statement: {insert_stmt}")
 
     try:
         cur = conn.cursor()
         # add the rows from the dataframe to the table
         cur.execute(insert_stmt)
         conn.commit()
-        module_logger.info(f"Insert to table {table} successful.")
+        logger.info(f"Insert to table {table} successful.")
     except psycopg2.Error as error:
-        module_logger.error(f"Error while inserting tickers to {table}", error)
+        logger.exception("")
     finally:
         if conn:
             cur.close()
@@ -109,7 +109,7 @@ def add_index_tickers(conn):
     Parameters:
         conn - database connection
     """
-    module_logger.debug("Started")
+    logger.debug("Started")
 
     ticker_type_id = get_ticker_type_id(conn, "index")
 
@@ -138,9 +138,9 @@ def add_index_tickers(conn):
         # add the rows from the dataframe to the table
         cur.execute(insert_stmt)
         conn.commit()
-        module_logger.info(f"Insert to table {table} successful.")
+        logger.info(f"Insert to table {table} successful.")
     except psycopg2.Error as error:
-        module_logger.error(f"Error while inserting tickers to {table}", error)
+        logger.exception("")
     finally:
         if conn:
             cur.close()
@@ -153,7 +153,7 @@ def add_stock_tickers(conn):
     Parameters:
         conn - database connection
     """
-    module_logger.debug("Started")
+    logger.debug("Started")
 
     ticker_type_id = get_ticker_type_id(conn, "stock")
     currency_code = get_currency_code(conn, "US Dollar")
@@ -184,9 +184,9 @@ def add_stock_tickers(conn):
         # add the rows from the dataframe to the table
         cur.execute(insert_stmt)
         conn.commit()
-        module_logger.info(f"Insert to table {table} successful.")
+        logger.info(f"Insert to table {table} successful.")
     except psycopg2.Error as error:
-        module_logger.error(f"Error while inserting tickers to {table}", error)
+        logger.exception("")
     finally:
         if conn:
             cur.close()
@@ -199,7 +199,7 @@ def add_etp_tickers(conn):
     Parameters:
         conn - database connection
     """
-    module_logger.debug("Started")
+    logger.debug("Started")
 
     ticker_type_id = get_ticker_type_id(conn, "etp")
     currency_code = get_currency_code(conn, "US Dollar")
@@ -230,9 +230,9 @@ def add_etp_tickers(conn):
         # add the rows from the dataframe to the table
         cur.execute(insert_stmt)
         conn.commit()
-        module_logger.info(f"Insert to table {table} successful.")
+        logger.info(f"Insert to table {table} successful.")
     except psycopg2.Error as error:
-        module_logger.error(f"Error while inserting tickers to {table}", error)
+        logger.exception("")
     finally:
         if conn:
             cur.close()
@@ -246,7 +246,7 @@ def get_ticker_type_id(conn, code):
         conn - database connection
         code - code for the ticker_type
     """
-    module_logger.debug(f"Started with code {code}")
+    logger.debug(f"Started with code {code}")
 
     table = "securities.ticker_type"
 
@@ -260,7 +260,7 @@ def get_ticker_type_id(conn, code):
     ticker_types = cur.fetchall()
     for row in ticker_types:
         ticker_type_id = row[0]
-        module_logger.debug(f"id for ticker_type code {code} is {ticker_type_id}.")
+        logger.debug(f"id for ticker_type code {code} is {ticker_type_id}.")
         break
     return ticker_type_id
 
@@ -272,7 +272,7 @@ def get_exchange_id(conn, code):
         conn - database connection
         code - code for the exchange
     """
-    module_logger.debug(f"Started with code {code}")
+    logger.debug(f"Started with code {code}")
 
     table = "securities.exchange"
 
@@ -286,7 +286,7 @@ def get_exchange_id(conn, code):
     exchanges = cur.fetchall()
     for row in exchanges:
         exchange_id = row[0]
-        module_logger.debug(f"id for exchange code {code} is {exchange_id}.")
+        logger.debug(f"id for exchange code {code} is {exchange_id}.")
         break
     return exchange_id
 
@@ -298,7 +298,7 @@ def get_currency_code(conn, name):
         conn - database connection
         name - name for the currency
     """
-    module_logger.debug(f"Started with name {name}")
+    logger.debug(f"Started with name {name}")
 
     table = "securities.currency"
 
@@ -314,7 +314,7 @@ def get_currency_code(conn, name):
     currencies = cur.fetchall()
     for row in currencies:
         currency_code = row[0]
-        module_logger.debug(f"Code for currency name {name} is {currency_code}.")
+        logger.debug(f"Code for currency name {name} is {currency_code}.")
         break
     return currency_code
 
@@ -325,7 +325,7 @@ def add_ohlcvs(conn):
     Parameters:
         conn - database connection
     """
-    module_logger.debug("Started")
+    logger.debug("Started")
 
     table = "securities.ohlcv"
 
@@ -355,9 +355,9 @@ def add_ohlcvs(conn):
         # add the rows from the dataframe to the table
         cur.execute(insert_stmt)
         conn.commit()
-        module_logger.info(f"Insert to table {table} successful.")
+        logger.info(f"Insert to table {table} successful.")
     except psycopg2.Error as error:
-        module_logger.error(f"Error while inserting tickers to {table}", error)
+        logger.exception("")
     finally:
         if conn:
             cur.close()

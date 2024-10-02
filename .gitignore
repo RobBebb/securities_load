@@ -6,3 +6,14 @@ docs/my_training.md
 load_polygon/.env
 test/.env
 load_polygon/__pycache__/*.*
+asx_load.log
+load_asx.log
+load_asx.txt
+yfinance.cache
+examples/.env
+load_asx/.env
+test/__pycache__/*.pyc
+securities/__pycache__/*.pyc
+load_asx/__pycache__/*.pyc
+securities/__pycache__/*.pyc
+securities/.env
