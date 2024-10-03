@@ -7,6 +7,97 @@ import psycopg2.extras
 logger = logging.getLogger(__name__)
 
 
+def retrieve_ohlcv_from_to(conn, exchange_code, ticker, start_date, end_date):
+    """
+    Read the securities.ohlcv table and return the ohlcv data for the specified period
+    Parameters:
+        conn - database connection
+        exchange_code - primary exchange for the ticker
+        ticker - symbol for the stock
+        start_date - earliest date to get data for
+        end_date - latest date to get data for
+    """
+
+    exchange_id = get_exchange_id(conn, exchange_code)
+
+    tables = """securities.ticker AS t
+        INNER JOIN securities.ohlcv AS o
+        ON o.ticker_id = t.id"""
+
+    # create a list of columns
+    table_columns = """o.price_date,
+        o.open AS Open,
+        o.high AS High,
+        o.low AS Low,
+        o.close AS Close,
+        o.volume AS Volume"""
+
+    condition = """t.ticker = %(ticker)s
+        and t.exchange_id = %(exchange_id)s
+        and o.date >= %(start_date)s
+        and o.date <= %(end_date)s"""
+
+    params = {
+        "exchange_id": exchange_id,
+        "ticker": ticker,
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+    select_stmt = f"""SELECT {table_columns}
+        FROM {tables}
+        WHERE {condition}
+        ORDER BY o.price_date ASC"""
+    # print(select_stmt)
+    df = pd.read_sql_query(select_stmt, params=params, con=conn, index_col="date")
+    return df
+
+
+def retrieve_ohlcv_last_n_days(conn, exchange_code, ticker, days=2):
+    """
+    Read the securities.ohlcv table and return the ohlcv data for the specified period
+    Parameters:
+        conn - database connection
+        exchange_code - primary exchange for the ticker
+        ticker - symbol for the stock
+        days - number of days to get data for
+    """
+
+    exchange_id = get_exchange_id(conn, exchange_code)
+
+    tables = """securities.ticker AS t
+        INNER JOIN securities.ohlcv AS o
+        ON o.ticker_id = t.id"""
+
+    # create a list of columns
+    table_columns = """o.date,
+        o.open AS Open,
+        o.high AS High,
+        o.low AS Low,
+        o.close AS Close,
+        o.volume AS Volume"""
+
+    condition = """t.ticker = %(ticker)s
+        and t.exchange_id = %(exchange_id)s
+    """
+
+    params = {
+        "exchange_id": exchange_id,
+        "ticker": ticker,
+    }
+    select_stmt = f"""SELECT {table_columns}
+        FROM {tables}
+        WHERE {condition}
+        ORDER BY o.date DESC
+        FETCH FIRST {days} ROWS ONLY"""
+    # print(select_stmt)
+    df = pd.read_sql_query(select_stmt, params=params, con=conn)
+    df["Datetime"] = pd.to_datetime(
+        df["date"].astype("string") + " 00:00:00", format="%Y-%m-%d %H:%M:%S"
+    )
+    df = df.set_index("Datetime")
+    return df
+
+
 def get_ticker_type_id(conn, code: str) -> int:
     """
     Read the ticker_type table and return the id

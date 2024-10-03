@@ -17,3 +17,4 @@ securities/__pycache__/*.pyc
 load_asx/__pycache__/*.pyc
 securities/__pycache__/*.pyc
 securities/.env
+securities/__pycache__/postgresql_database_functions.cpython-311.pyc

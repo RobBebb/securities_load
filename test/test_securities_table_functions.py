@@ -23,6 +23,7 @@ from securities_load.securities.securities_table_functions import (
     get_ticker_using_id,
     get_tickers_using_exchange_code,
     get_watchlist_id_from_code,
+    retrieve_ohlcv_last_n_days,
 )
 
 load_dotenv()
@@ -186,3 +187,11 @@ def test_get_tickers_using_exchange_code_successful():
 
 def test_get_tickers_using_exchange_code_not_found():
     assert get_tickers_using_exchange_code(conn, "ZZZ") == 0
+
+
+def test_retrieve_ohlcv_last_n_days_successful():
+    print(retrieve_ohlcv_last_n_days(conn, "XNAS", "GOOGL", 5))
+
+
+def test_retrieve_ohlcv_last_n_days_not_found():
+    assert retrieve_ohlcv_last_n_days(conn, "ZZZZ", "GOOGL", 5) == 0
