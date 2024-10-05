@@ -28,7 +28,6 @@ def load_asx_tickers() -> None:
     asx_listed_companies_transformed = transform_asx_listed_companies(
         engine, asx_listed_companies
     )
-    print(asx_listed_companies_transformed.head())
     module_logger.debug("Transformed")
 
     if asx_listed_companies_transformed is not None:

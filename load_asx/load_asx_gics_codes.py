@@ -32,7 +32,6 @@ def load_asx_gics_codes() -> None:
     asx_listed_companies_transformed = transform_asx_company_gics_codes(
         engine, asx_listed_companies_cleaned
     )
-    print(asx_listed_companies_transformed.head())
     module_logger.debug("Transformed")
 
     if asx_listed_companies_transformed is not None:

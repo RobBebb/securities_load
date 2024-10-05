@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 from dotenv import load_dotenv
 
-from load_asx.load_asx_ohlcv import load_asx_ohlcv
+from securities_load.load_asx.load_asx_ohlcv import load_asx_ohlcv
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

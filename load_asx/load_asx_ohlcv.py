@@ -59,7 +59,6 @@ def load_asx_ohlcv(period: str = "5d") -> None:
         message = f"Prcessing ticker: {yahoo_ticker}"
         logger.info(message)
         hist = yf_ticker.history(period=period, repair=True)
-        print(hist.head())
         if not hist.empty:
             hist["ticker_id"] = ticker_id
             hist["data_vendor_id"] = data_vendor_id
@@ -87,7 +86,6 @@ def load_asx_ohlcv(period: str = "5d") -> None:
                 "ticker_id",
                 "data_vendor_id",
             ]
-            print(hist_prices.head())
             add_or_update_ohlcvs(conn, hist_prices)
 
     # Close the connection

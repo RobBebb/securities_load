@@ -130,17 +130,12 @@ def transform_asx_listed_companies(
 
     columns = ["ticker", "name", "gics_industry_group", "listed_date", "market_cap"]
     asx_listed_companies.columns = columns
-    print(
-        asx_listed_companies.groupby("gics_industry_group")[
-            "gics_industry_group"
-        ].count()
-    )
     asx_listed_companies["gics_industry_group_id"] = asx_listed_companies[
         "gics_industry_group"
-    ].applymap(lambda x: get_gics_industry_group_id_from_name(engine, x))
+    ].apply(lambda x: get_gics_industry_group_id_from_name(engine, x))
     asx_listed_companies["gics_sector_id"] = asx_listed_companies[
         "gics_industry_group_id"
-    ].applymap(lambda x: get_gics_sector_id_from_industry_group_id(engine, x))
+    ].apply(lambda x: get_gics_sector_id_from_industry_group_id(engine, x))
     asx_listed_companies.drop(
         columns=["gics_industry_group", "market_cap"], inplace=True
     )
