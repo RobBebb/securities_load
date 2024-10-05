@@ -19,4 +19,4 @@ logger.info("Started")
 
 load_dotenv()
 
-load_asx_ohlcv(period="1mo")
+load_asx_ohlcv(period="5y")

@@ -12,7 +12,6 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 import securities_load.load_asx.load_asx_ohlcv as lao
-import securities_load.load_polygon.polygon_to_securities_load_ohlcvs as psldp
 
 with DAG(
     dag_id="daily_aus_pipeline_dag",
