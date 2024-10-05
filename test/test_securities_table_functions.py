@@ -3,7 +3,10 @@ import logging
 import pytest
 from dotenv import load_dotenv
 
-from securities_load.securities.postgresql_database_functions import connect
+from securities_load.securities.postgresql_database_functions import (
+    connect,
+    sqlalchemy_engine,
+)
 from securities_load.securities.securities_table_functions import (
     get_currency_code,
     get_exchange_code,
@@ -29,7 +32,7 @@ from securities_load.securities.securities_table_functions import (
 load_dotenv()
 
 # Open a connection
-conn = connect()
+engine = sqlalchemy_engine()
 
 module_logger = logging.getLogger(__name__)
 
@@ -42,156 +45,156 @@ def setup_connection():
 
 
 def test_get_ticker_type_id_successful():
-    assert get_ticker_type_id(conn, "stock") == 5
+    assert get_ticker_type_id(engine, "stock") == 5
 
 
 def test_get_ticker_type_id_not_found():
-    assert get_ticker_type_id(conn, "aaa") == 0
+    assert get_ticker_type_id(engine, "aaa") == None
 
 
 def test_get_exchange_id_successful():
-    assert get_exchange_id(conn, "XASX") == 1
+    assert get_exchange_id(engine, "XASX") == 1
 
 
 def test_get_exchange_id_not_found():
-    assert get_exchange_id(conn, "ASX") == 0
+    assert get_exchange_id(engine, "ASX") == None
 
 
 def test_get_exchange_code_successful():
-    assert get_exchange_code(conn, 2) == "XNAS"
+    assert get_exchange_code(engine, 2) == "XNAS"
 
 
 def test_get_exchange_code_not_found():
-    assert get_exchange_code(conn, 999) == ""
+    assert get_exchange_code(engine, 999) == None
 
 
 def test_get_exchange_id_by_acronym_successful():
-    assert get_exchange_id_by_acronym(conn, "ASX") == 1
+    assert get_exchange_id_by_acronym(engine, "ASX") == 1
 
 
 def test_get_exchange_id_by_acronym_successful_duplicate():
-    assert get_exchange_id_by_acronym(conn, "NYSE") == 3
+    assert get_exchange_id_by_acronym(engine, "NYSE") == 3
 
 
 def test_get_exchange_id_by_acronym_not_found():
-    assert get_exchange_id_by_acronym(conn, "XASX") == 0
+    assert get_exchange_id_by_acronym(engine, "XASX") == None
 
 
 def test_get_currency_code_successful():
-    assert get_currency_code(conn, "Australian Dollar") == "AUD"
+    assert get_currency_code(engine, "Australian Dollar") == "AUD"
 
 
 def test_get_currency_code_not_found():
-    assert get_currency_code(conn, "Australian Rand") == ""
+    assert get_currency_code(engine, "Australian Rand") == None
 
 
 def test_get_ticker_using_id_successful():
-    assert get_ticker_using_id(conn, 5230) == ("AAPL", "XNAS")
+    assert get_ticker_using_id(engine, 5230) == ("AAPL", "XNAS")
 
 
 def test_get_ticker_using_id_not_found():
-    assert get_ticker_using_id(conn, 99999) == ()
+    assert get_ticker_using_id(engine, 99999) == ()
 
 
 def test_get_ticker_id_successful():
-    assert get_ticker_id(conn, "XNYS", "AA") == 5218
+    assert get_ticker_id(engine, "XNYS", "AA") == 5218
 
 
 def test_get_ticker_id_not_found():
-    assert get_ticker_id(conn, "XXXX", "AA") == 0
+    assert get_ticker_id(engine, "XXXX", "AA") == None
 
 
 def test_get_gics_sector_code_successful():
-    assert get_gics_sector_code(conn, "Materials") == "15"
+    assert get_gics_sector_code(engine, "Materials") == "15"
 
 
 def test_get_gics_sector_code_not_found():
-    assert get_gics_sector_code(conn, "Tech") == ""
+    assert get_gics_sector_code(engine, "Tech") == None
 
 
 def test_get_gics_industry_group_code_successful():
-    assert get_gics_industry_group_code(conn, "Consumer Services") == "2530"
+    assert get_gics_industry_group_code(engine, "Consumer Services") == "2530"
 
 
 def test_get_gics_industry_group_code_not_found():
-    assert get_gics_industry_group_code(conn, "Consumer") == ""
+    assert get_gics_industry_group_code(engine, "Consumer") == None
 
 
 def test_get_gics_industry_code_successful():
-    assert get_gics_industry_code(conn, "Machinery") == "201060"
+    assert get_gics_industry_code(engine, "Machinery") == "201060"
 
 
 def test_get_gics_industry_code_not_found():
-    assert get_gics_industry_code(conn, "Technology") == ""
+    assert get_gics_industry_code(engine, "Technology") == None
 
 
 def test_get_gics_sub_industry_code_successful():
-    assert get_gics_sub_industry_code(conn, "Coal & Consumable Fuels") == "10102050"
+    assert get_gics_sub_industry_code(engine, "Coal & Consumable Fuels") == "10102050"
 
 
 def test_get_gics_sub_industry_code_not_found():
-    assert get_gics_sub_industry_code(conn, "Apparel") == ""
+    assert get_gics_sub_industry_code(engine, "Apparel") == None
 
 
 def test_get_gics_sector_id_from_name_successful():
-    assert get_gics_sector_id_from_name(conn, "Energy") == 1
+    assert get_gics_sector_id_from_name(engine, "Energy") == 1
 
 
 def test_get_gics_sector_id_from_name_not_found():
-    assert get_gics_sector_id_from_name(conn, "Consumer") == 0
+    assert get_gics_sector_id_from_name(engine, "Consumer") == None
 
 
 def test_get_gics_industry_group_id_from_name_successful():
-    assert get_gics_industry_group_id_from_name(conn, "Transportation") == 5
+    assert get_gics_industry_group_id_from_name(engine, "Transportation") == 5
 
 
 def test_get_gics_industry_group_id_from_name_not_found():
-    assert get_gics_industry_group_id_from_name(conn, "Consumer") == 0
+    assert get_gics_industry_group_id_from_name(engine, "Consumer") == None
 
 
 def test_get_gics_industry_id_from_name_successful():
-    assert get_gics_industry_id_from_name(conn, "Industrial Conglomerates") == 12
+    assert get_gics_industry_id_from_name(engine, "Industrial Conglomerates") == 12
 
 
 def test_get_gics_industry_id_from_name_not_found():
-    assert get_gics_industry_id_from_name(conn, "Consumer") == 0
+    assert get_gics_industry_id_from_name(engine, "Consumer") == None
 
 
 def test_get_gics_sub_industry_id_from_name_successful():
-    assert get_gics_sub_industry_id_from_name(conn, "Industrial Gases") == 11
+    assert get_gics_sub_industry_id_from_name(engine, "Industrial Gases") == 11
 
 
 def test_get_gics_sub_industry_id_from_name_not_found():
-    assert get_gics_sub_industry_id_from_name(conn, "Consumer") == 0
+    assert get_gics_sub_industry_id_from_name(engine, "Consumer") == None
 
 
 def test_get_gics_sector_id_from_industry_group_id_successful():
-    assert get_gics_sector_id_from_industry_group_id(conn, 8) == 4
+    assert get_gics_sector_id_from_industry_group_id(engine, 8) == 4
 
 
 def test_get_gics_sector_id_from_industry_group_id_not_found():
-    assert get_gics_sector_id_from_industry_group_id(conn, 99) == 0
+    assert get_gics_sector_id_from_industry_group_id(engine, 99) == None
 
 
 def test_get_watchlist_id_from_code_successful():
-    assert get_watchlist_id_from_code(conn, "AUS Indices") == 3
+    assert get_watchlist_id_from_code(engine, "AUS Indices") == 3
 
 
 def test_get_watchlist_id_from_code_not_found():
-    assert get_watchlist_id_from_code(conn, "AUS") == 0
+    assert get_watchlist_id_from_code(engine, "AUS") == None
 
 
 def test_get_tickers_using_exchange_code_successful():
-    print(get_tickers_using_exchange_code(conn, "XASX"))
+    print(get_tickers_using_exchange_code(engine, "XASX"))
 
 
 def test_get_tickers_using_exchange_code_not_found():
-    assert get_tickers_using_exchange_code(conn, "ZZZ") == 0
+    assert get_tickers_using_exchange_code(engine, "ZZZ") == []
 
 
 def test_retrieve_ohlcv_last_n_days_successful():
-    print(retrieve_ohlcv_last_n_days(conn, "XNAS", "GOOGL", 5))
+    print(retrieve_ohlcv_last_n_days(engine, "XNAS", "GOOGL", 5))
 
 
 def test_retrieve_ohlcv_last_n_days_not_found():
-    assert retrieve_ohlcv_last_n_days(conn, "ZZZZ", "GOOGL", 5) == 0
+    assert len(retrieve_ohlcv_last_n_days(engine, "XNAS", "XXXX", 5)) == 0

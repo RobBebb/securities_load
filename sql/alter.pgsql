@@ -472,3 +472,6 @@ ALTER TABLE securities.ticker
         FOREIGN KEY(gics_sub_industry_id)
         REFERENCES securities.gics_sub_industry(id)
         ON DELETE NO ACTION;
+
+CREATE INDEX IF NOT EXISTS ix_ticker_exchange_id_ticker ON securities.ticker( exchange_id, ticker );
+CREATE INDEX IF NOT EXISTS ix_ohlcv_ticker_id ON securities.ohlcv(ticker_id);

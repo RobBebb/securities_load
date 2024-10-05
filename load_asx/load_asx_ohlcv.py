@@ -7,7 +7,10 @@ from requests import Session
 from requests_cache import CacheMixin, SQLiteCache
 from requests_ratelimiter import LimiterMixin, MemoryQueueBucket
 
-from securities_load.securities.postgresql_database_functions import connect
+from securities_load.securities.postgresql_database_functions import (
+    connect,
+    sqlalchemy_engine,
+)
 from securities_load.securities.securities_table_functions import (
     add_or_update_ohlcvs,
     get_data_vendor_id,
@@ -30,6 +33,7 @@ def load_asx_ohlcv(period: str = "5d") -> None:
 
     # Open a connection
     conn = connect()
+    engine = sqlalchemy_engine()
 
     class CachedLimiterSession(CacheMixin, LimiterMixin, Session):
         pass
@@ -42,9 +46,9 @@ def load_asx_ohlcv(period: str = "5d") -> None:
         backend=SQLiteCache("yfinance.cache"),
     )
 
-    data_vendor_id = get_data_vendor_id(conn, "Yahoo")
+    data_vendor_id = get_data_vendor_id(engine, "Yahoo")
 
-    tickers = get_tickers_using_exchange_code(conn, "XASX")
+    tickers = get_tickers_using_exchange_code(engine, "XASX")
 
     for ticker_tuple in tickers:
         ticker_id = ticker_tuple[0]

@@ -9,8 +9,9 @@ import logging
 
 from dotenv import load_dotenv
 
-from securities_load.securities.postgresql_database_functions import connect
+from securities_load.securities.postgresql_database_functions import sqlalchemy_engine
 from securities_load.securities.securities_table_functions import (
+    get_exchange_id,
     retrieve_ohlcv_last_n_days,
 )
 
@@ -28,8 +29,16 @@ logger.info("Start")
 load_dotenv()
 
 # Open a connection
-conn = connect()
-tickers = retrieve_ohlcv_last_n_days(conn, "XNAS", "GOOGL", 5)
+engine = sqlalchemy_engine()
 
-print(tickers.head())
-print(tickers.info())
+code = "XASX"
+
+exchange_id = get_exchange_id(engine, code)
+print(exchange_id)
+if exchange_id == None:
+    raise KeyError(f"No exchange id found for exchange code {code}!")
+
+# tickers = retrieve_ohlcv_last_n_days(engine, "XNAS", "GOOGL", 5)
+
+# print(tickers.head())
+# print(tickers.info())

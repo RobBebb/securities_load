@@ -7,7 +7,10 @@ from securities_load.load_asx.asx_functions import (
     read_asx_listed_companies,
     transform_asx_listed_companies,
 )
-from securities_load.securities.postgresql_database_functions import connect
+from securities_load.securities.postgresql_database_functions import (
+    connect,
+    sqlalchemy_engine,
+)
 from securities_load.securities.securities_table_functions import add_or_update_tickers
 
 module_logger = logging.getLogger(__name__)
@@ -19,9 +22,11 @@ def load_asx_tickers() -> None:
 
     module_logger.debug("Started")
     conn = connect()
+    engine = sqlalchemy_engine()
+
     asx_listed_companies = read_asx_listed_companies()
     asx_listed_companies_transformed = transform_asx_listed_companies(
-        conn, asx_listed_companies
+        engine, asx_listed_companies
     )
     print(asx_listed_companies_transformed.head())
     module_logger.debug("Transformed")

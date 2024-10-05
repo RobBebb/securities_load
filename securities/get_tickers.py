@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pandas as pd
 from dotenv import load_dotenv
 
-from securities_load.securities.postgresql_database_functions import connect
+from securities_load.securities.postgresql_database_functions import sqlalchemy_engine
 from securities_load.securities.securities_table_functions import (
     get_tickers_using_exchange_code,
 )
@@ -20,8 +20,8 @@ def get_tickers() -> None:
     print("hi")
     # load_dotenv()
     # Open a connection
-    conn = connect()
-    tickers = get_tickers_using_exchange_code(conn, "XASX")
+    engine = sqlalchemy_engine()
+    tickers = get_tickers_using_exchange_code(engine, "XASX")
     # Write the data to the local polygon database
     # if ticker_list is not None:
     #     add_tickers(conn, ticker_list)
@@ -29,6 +29,3 @@ def get_tickers() -> None:
     yahoo_tickers = []
     for i in tickers:
         yahoo_tickers.append(i[1])
-
-    print(yahoo_tickers)  # Close the connection
-    conn.close()

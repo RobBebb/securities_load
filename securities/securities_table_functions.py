@@ -3,29 +3,35 @@ import logging
 import pandas as pd
 import psycopg2
 import psycopg2.extras
+from sqlalchemy import Engine, text
+from sqlalchemy.exc import NoResultFound
 
 logger = logging.getLogger(__name__)
 
 
-def retrieve_ohlcv_from_to(conn, exchange_code, ticker, start_date, end_date):
+def retrieve_ohlcv_from_to(
+    engine: Engine, exchange_code: str, ticker: str, start_date: str, end_date: str
+) -> pd.DataFrame:
     """
     Read the securities.ohlcv table and return the ohlcv data for the specified period
     Parameters:
-        conn - database connection
+        engine - database engine
         exchange_code - primary exchange for the ticker
         ticker - symbol for the stock
         start_date - earliest date to get data for
         end_date - latest date to get data for
     """
 
-    exchange_id = get_exchange_id(conn, exchange_code)
+    exchange_id = get_exchange_id(engine, exchange_code)
+    if exchange_id == None:
+        raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
 
     tables = """securities.ticker AS t
         INNER JOIN securities.ohlcv AS o
         ON o.ticker_id = t.id"""
 
     # create a list of columns
-    table_columns = """o.price_date,
+    table_columns = """o.date,
         o.open AS Open,
         o.high AS High,
         o.low AS Low,
@@ -46,23 +52,31 @@ def retrieve_ohlcv_from_to(conn, exchange_code, ticker, start_date, end_date):
     select_stmt = f"""SELECT {table_columns}
         FROM {tables}
         WHERE {condition}
-        ORDER BY o.price_date ASC"""
+        ORDER BY o.date ASC"""
     # print(select_stmt)
-    df = pd.read_sql_query(select_stmt, params=params, con=conn, index_col="date")
+    df = pd.read_sql_query(select_stmt, params=params, con=engine)
+    df["Datetime"] = pd.to_datetime(
+        df["date"].astype("string") + " 00:00:00", format="%Y-%m-%d %H:%M:%S"
+    )
+    df = df.set_index("Datetime")
     return df
 
 
-def retrieve_ohlcv_last_n_days(conn, exchange_code, ticker, days=2):
+def retrieve_ohlcv_last_n_days(
+    engine: Engine, exchange_code: str, ticker: str, days: int = 2
+) -> pd.DataFrame:
     """
     Read the securities.ohlcv table and return the ohlcv data for the specified period
     Parameters:
-        conn - database connection
+        engine - database engine
         exchange_code - primary exchange for the ticker
         ticker - symbol for the stock
         days - number of days to get data for
     """
 
-    exchange_id = get_exchange_id(conn, exchange_code)
+    exchange_id = get_exchange_id(engine, exchange_code)
+    if exchange_id == None:
+        raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
 
     tables = """securities.ticker AS t
         INNER JOIN securities.ohlcv AS o
@@ -90,7 +104,7 @@ def retrieve_ohlcv_last_n_days(conn, exchange_code, ticker, days=2):
         ORDER BY o.date DESC
         FETCH FIRST {days} ROWS ONLY"""
     # print(select_stmt)
-    df = pd.read_sql_query(select_stmt, params=params, con=conn)
+    df = pd.read_sql_query(select_stmt, params=params, con=engine)
     df["Datetime"] = pd.to_datetime(
         df["date"].astype("string") + " 00:00:00", format="%Y-%m-%d %H:%M:%S"
     )
@@ -98,11 +112,11 @@ def retrieve_ohlcv_last_n_days(conn, exchange_code, ticker, days=2):
     return df
 
 
-def get_ticker_type_id(conn, code: str) -> int:
+def get_ticker_type_id(engine: Engine, code: str) -> int | None:
     """
     Read the ticker_type table and return the id
     Parameters:
-        conn - database connection
+        engine - database engine
         code - code for the ticker_type
         Returns:
         ticker_type_id if found
@@ -111,28 +125,23 @@ def get_ticker_type_id(conn, code: str) -> int:
     logger.debug(f"Started with code {code}")
 
     table = "securities.ticker_type"
-
-    # create a list of columns from the dataframe
     table_columns = "id"
-    ticker_type_id = 0
+    condition = "code = :code"
+    data = {"code": code}
 
-    cur = conn.cursor()
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE code = '{code}'"
-    cur.execute(select_stmt)
-    ticker_types = cur.fetchall()
-    for row in ticker_types:
-        ticker_type_id = row[0]
-        logger.debug(f"id for ticker_type code {code} is {ticker_type_id}.")
-        break
-    return ticker_type_id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_data_vendor_id(conn, name: str) -> int:
+def get_data_vendor_id(engine: Engine, name: str) -> int | None:
     """
     Read the ticker_type table and return the id
     Parameters:
-        conn - database connection
+        engine - database connection
         name - name of the data vendor
         Returns:
         ticker_type_id if found
@@ -144,26 +153,23 @@ def get_data_vendor_id(conn, name: str) -> int:
 
     # create a list of columns from the dataframe
     table_columns = "id"
-    ticker_type_id = 0
+    condition = "name = :name"
+    data = {"name": name}
 
-    cur = conn.cursor()
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE name = '{name}'"
-    cur.execute(select_stmt)
-    data_vendors = cur.fetchall()
-    for row in data_vendors:
-        data_vendors_id = row[0]
-        logger.debug(f"id for data vendor name {name} is {data_vendors_id}.")
-        break
-    return data_vendors_id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_exchange_id_by_acronym(conn, acronym: str) -> int:
+def get_exchange_id_by_acronym(engine: Engine, acronym: str) -> int | None:
     """
     Read the exchange table using the acronym and return the id. Where there are
     duplicates the first found will be returned.
     Parameters:
-        conn - database connection
+        engine - database connection
         acronym - acronym for the exchange e.g. ASX
     Returns:
         exchangeId if found
@@ -175,57 +181,47 @@ def get_exchange_id_by_acronym(conn, acronym: str) -> int:
 
     # create a list of columns from the dataframe
     table_columns = "id"
-    exchange_id = 0
+    condition = "acronym = :acronym"
+    data = {"acronym": acronym}
 
-    cur = conn.cursor()
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition} ORDER BY id"
+    sql = text(select_stmt)
 
-    select_stmt = (
-        f"SELECT {table_columns} FROM {table} WHERE acronym = '{acronym}' ORDER BY id"
-    )
-    cur.execute(select_stmt)
-    exchanges = cur.fetchall()
-    for row in exchanges:
-        exchange_id = row[0]
-        logger.debug(f"id for exchange acronym {acronym} is {exchange_id}.")
-        break
-    return exchange_id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_exchange_id(conn, code: str) -> int:
+def get_exchange_id(engine: Engine, code: str) -> int | None:
     """
     Read the exchange table and return the id
     Parameters:
-        conn - database connection
+        engine - SQLAlchemy engine
         code - code for the exchange
     Returns:
         exchangeId if found
-        0 if not found
+        None if not found
     """
     logger.debug(f"Started with code {code}")
 
     table = "securities.exchange"
-
-    # create a list of columns from the dataframe
     table_columns = "id"
-    exchange_id = 0
+    condition = "code = :code"
+    data = {"code": code}
 
-    cur = conn.cursor()
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE code = '{code}'"
-    cur.execute(select_stmt)
-    exchanges = cur.fetchall()
-    for row in exchanges:
-        exchange_id = row[0]
-        logger.debug(f"id for exchange code {code} is {exchange_id}.")
-        break
-    return exchange_id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_exchange_code(conn, id: int) -> str:
+def get_exchange_code(engine: Engine, id: int) -> str | None:
     """
     Read the exchange table using the id and return the code.
     Parameters:
-        conn - database connection
+        engine - database connection
         id - internal identifier for the exchange
     Returns:
         Exchange code if found
@@ -237,25 +233,22 @@ def get_exchange_code(conn, id: int) -> str:
 
     # create a list of columns from the dataframe
     table_columns = "code"
-    exchange_code = ""
+    condition = "id = :id"
+    data = {"id": id}
 
-    cur = conn.cursor()
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE id = '{id}'"
-    cur.execute(select_stmt)
-    exchanges = cur.fetchall()
-    for row in exchanges:
-        exchange_code = row[0].strip()
-        logger.debug(f"code for exchange id {id} is {exchange_code}.")
-        break
-    return exchange_code
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0].strip() if result is not None else result
 
 
-def get_currency_code(conn, name: str) -> str:
+def get_currency_code(engine: Engine, name: str) -> str | None:
     """
     Read the currency table and return the id
     Parameters:
-        conn - database connection
+        engine - database engine
         name - name for the currency
     """
     logger.debug(f"Started with name {name}")
@@ -264,67 +257,48 @@ def get_currency_code(conn, name: str) -> str:
 
     # create a list of columns from the dataframe
     table_columns = "code"
-    currency_code = ""
+    condition = "UPPER(currency) = UPPER(:name)"
+    data = {"name": name}
 
-    cur = conn.cursor()
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    select_stmt = (
-        f"SELECT {table_columns} FROM {table} WHERE UPPER(currency) = UPPER('{name}')"
-    )
-    cur.execute(select_stmt)
-    currencies = cur.fetchall()
-    for row in currencies:
-        currency_code = row[0].strip()
-        logger.debug(f"Code for currency name {name} is {currency_code}.")
-        break
-    return currency_code
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0].strip() if result is not None else result
 
 
-def get_ticker_using_id(conn, id: int) -> tuple:
+def get_ticker_using_id(engine: Engine, id: int) -> tuple:
     """
     Read the ticker table and return ticker
     Parameters:
-        conn - database connection
+        engine - database connection
         ticker_id - id of the instrument
     """
     logger.debug("Started")
 
-    table = "securities.ticker"
+    table = """securities.ticker AS t 
+        INNER JOIN securities.exchange AS e 
+        on t.exchange_id = e.id"""
 
     # create a list of columns from the dataframe
-    table_columns = "ticker, exchange_id"
+    table_columns = "t.ticker, e.code"
+    condition = "t.id = :id"
+    data = {"id": id}
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE id = {id}"
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        tickers = cur.fetchall()
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-
-    if tickers:
-        for row in tickers:
-            ticker = row[0]
-            exchange_id = row[1]
-            exchange_code = get_exchange_code(conn, exchange_id)
-            logger.debug(
-                f"ticker for id {id} is {ticker} and exchange code is {exchange_code}"
-            )
-            return (ticker, exchange_code.strip())
-
-    logger.debug(f"Ticker_id {id} cannot be found in {table}")
-    return ()
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return (result[0], result[1].strip()) if result is not None else ()
 
 
-def get_ticker_id(conn, exchange_code: str, ticker: str) -> int:
+def get_ticker_id(engine: Engine, exchange_code: str, ticker: str) -> int | None:
     """
     Read the ticker table and return ticker_id
     Parameters:
-        conn - database connection
+        engine - database connection
         ticker - name of the instrument
     """
     logger.debug("Started")
@@ -333,34 +307,23 @@ def get_ticker_id(conn, exchange_code: str, ticker: str) -> int:
 
     # create a list of columns from the dataframe
     table_columns = "id"
-    ticker_id = 0
-    exchange_id = get_exchange_id(conn, exchange_code)
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE ticker = '{ticker}' AND exchange_id = '{exchange_id}'"
+    exchange_id = get_exchange_id(engine, exchange_code)
+    condition = "ticker = :ticker AND exchange_id = :exchange_id"
+    data = {"ticker": ticker, "exchange_id": exchange_id}
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        tickers = cur.fetchall()
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    if tickers:
-        for row in tickers:
-            ticker_id = row[0]
-            logger.debug(f"ticker_id for ticker {ticker} is {ticker_id}.")
-            return ticker_id
-    logger.debug(f"Ticker {ticker} cannot be found in {table}")
-    return ticker_id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_ticker_id_using_yahoo_ticker(conn, yahoo_ticker: str) -> int:
+def get_ticker_id_using_yahoo_ticker(engine: Engine, yahoo_ticker: str) -> int | None:
     """
     Read the ticker table and return ticker_id
     Parameters:
-        conn - database connection
+        engine - database connection
         yahoo_ticker - name of the instrument
     """
     logger.debug("Started")
@@ -369,58 +332,40 @@ def get_ticker_id_using_yahoo_ticker(conn, yahoo_ticker: str) -> int:
 
     # create a list of columns from the dataframe
     table_columns = "id"
+    condition = "yahoo_ticker = :yahoo_ticker"
+    data = {"yahoo_ticker": yahoo_ticker}
 
-    select_stmt = (
-        f"SELECT {table_columns} FROM {table} WHERE yahoo_ticker = '{yahoo_ticker}'"
-    )
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        tickers = cur.fetchall()
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-
-    if tickers:
-        for row in tickers:
-            ticker_id = row[0]
-            logger.debug(f"ticker_id for ticker {yahoo_ticker} is {ticker_id}.")
-            return ticker_id
-
-    logger.debug(f"Ticker {yahoo_ticker} cannot be found in {table}")
-    return 0
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_tickers_using_exchange_code(conn, exchange_code: str) -> list:
+def get_tickers_using_exchange_code(engine: Engine, exchange_code: str) -> list:
     """
     Read the ticker table and return ticker_id
     Parameters:
-        conn - database connection
+        engine - database connection
         exchange - name of the instrument
     """
     logger.debug("Started")
 
-    exchange_id = get_exchange_id(conn, exchange_code)
+    exchange_id = get_exchange_id(engine, exchange_code)
 
     table = "securities.ticker"
 
     # create a list of columns from the dataframe
     table_columns = "id, yahoo_ticker"
+    condition = "exchange_id = :exchange_id"
+    data = {"exchange_id": exchange_id}
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE exchange_id = {exchange_id} AND yahoo_ticker is not null"
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition} AND yahoo_ticker is not null"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        tickers = cur.fetchall()
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
+    with engine.connect() as connection:
+        tickers = connection.execute(sql, data).fetchall()
 
     yahoo_tickers = []
 
@@ -434,11 +379,11 @@ def get_tickers_using_exchange_code(conn, exchange_code: str) -> list:
     return yahoo_tickers
 
 
-def get_gics_sector_code(conn, sector_name: str) -> str:
+def get_gics_sector_code(engine: Engine, sector_name: str) -> str | None:
     """Get the sector code from the sector name.
 
     Args:
-        conn (connection): postgreSQL connection
+        engine (connection): postgreSQL connection
         sector_name (str): The sector name whose code will be found.
 
     Returns:
@@ -449,123 +394,75 @@ def get_gics_sector_code(conn, sector_name: str) -> str:
 
     # create a list of columns to get from the table
     table_columns = "code"
+    condition = "name = :sector_name"
+    data = {"sector_name": sector_name}
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE name = '{sector_name}'"
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        codes = cur.fetchall()
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-
-    if codes:
-        for row in codes:
-            code = row[0]
-            return code
-
-    logger.debug(f"Sector_name {sector_name} cannot be found in {table}")
-    return ""
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_gics_industry_group_code(conn, industry_group_name: str) -> str:
+def get_gics_industry_group_code(
+    engine: Engine, industry_group_name: str
+) -> str | None:
     logger.debug("Started")
     table = "securities.gics_industry_group"
 
     # create a list of columns to get from the table
     table_columns = "code"
+    condition = "name = :industry_group_name"
+    data = {"industry_group_name": industry_group_name}
 
-    select_stmt = (
-        f"SELECT {table_columns} FROM {table} WHERE name = '{industry_group_name}'"
-    )
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        codes = cur.fetchall()
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-
-    if codes:
-        for row in codes:
-            code = row[0]
-            return code
-
-    logger.debug(
-        f"Industry_group_name {industry_group_name} cannot be found in {table}"
-    )
-    return ""
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_gics_industry_code(conn, industry_name: str) -> str:
+def get_gics_industry_code(engine: Engine, industry_name: str) -> str | None:
     logger.debug("Started")
     table = "securities.gics_industry"
 
     # create a list of columns to get from the table
     table_columns = "code"
+    condition = "name = :industry_name"
+    data = {"industry_name": industry_name}
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE name = '{industry_name}'"
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        codes = cur.fetchall()
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-
-    if codes:
-        for row in codes:
-            code = row[0]
-            return code
-
-    logger.debug(f"Industry_name {industry_name} cannot be found in {table}")
-    return ""
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_gics_sub_industry_code(conn, sub_industry_name: str) -> str:
+def get_gics_sub_industry_code(engine: Engine, sub_industry_name: str) -> str | None:
     logger.debug("Started")
     table = "securities.gics_sub_industry"
 
     # create a list of columns to get from the table
     table_columns = "code"
+    condition = "name = :sub_industry_name"
+    data = {"sub_industry_name": sub_industry_name}
 
-    select_stmt = (
-        f"SELECT {table_columns} FROM {table} WHERE name = '{sub_industry_name}'"
-    )
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        codes = cur.fetchall()
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-
-    if codes:
-        for row in codes:
-            code = row[0]
-            return code
-
-    logger.debug(f"Sub_industry_name {sub_industry_name} cannot be found in {table}")
-    return ""
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_gics_sector_id_from_name(conn, sector_name: str) -> int:
+def get_gics_sector_id_from_name(engine: Engine, sector_name: str) -> int | None:
     """Get the sector code from the sector name.
 
     Args:
-        conn (connection): postgreSQL connection
+        engine (connection): postgreSQL connection
         sector_name (str): The sector name whose code will be found.
 
     Returns:
@@ -576,136 +473,86 @@ def get_gics_sector_id_from_name(conn, sector_name: str) -> int:
 
     # create a list of columns to get from the table
     table_columns = "id"
+    condition = "name = :sector_name"
+    data = {"sector_name": sector_name}
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE name = '{sector_name}'"
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        ids = cur.fetchall()
-        for row in ids:
-            id = row[0]
-            break
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-        # logger.debug(f"Sector name is {sector_name}. Sector id is {str(id)}")
-        return id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_gics_industry_group_id_from_name(conn, industry_group_name: str) -> int:
+def get_gics_industry_group_id_from_name(
+    engine: Engine, industry_group_name: str
+) -> int | None:
     logger.debug("Started")
     table = "securities.gics_industry_group"
-    id = 0
     # create a list of columns to get from the table
     table_columns = "id"
+    condition = "name = :industry_group_name"
+    data = {"industry_group_name": industry_group_name}
 
-    select_stmt = (
-        f"SELECT {table_columns} FROM {table} WHERE name = '{industry_group_name}'"
-    )
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        ids = cur.fetchall()
-        for row in ids:
-            id = row[0]
-            break
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-        return id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_gics_industry_id_from_name(conn, industry_name: str) -> int:
+def get_gics_industry_id_from_name(engine: Engine, industry_name: str) -> int | None:
     logger.debug("Started")
     table = "securities.gics_industry"
-    id = 0
     # create a list of columns to get from the table
     table_columns = "id"
+    condition = "name = :industry_name"
+    data = {"industry_name": industry_name}
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE name = '{industry_name}'"
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        ids = cur.fetchall()
-        for row in ids:
-            id = row[0]
-            break
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-        return id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_gics_sub_industry_id_from_name(conn, sub_industry_name: str) -> int:
+def get_gics_sub_industry_id_from_name(
+    engine: Engine, sub_industry_name: str
+) -> int | None:
     logger.debug("Started")
     table = "securities.gics_sub_industry"
-    id = 0
 
     # create a list of columns to get from the table
     table_columns = "id"
+    condition = "name = :sub_industry_name"
+    data = {"sub_industry_name": sub_industry_name}
 
-    select_stmt = (
-        f"SELECT {table_columns} FROM {table} WHERE name = '{sub_industry_name}'"
-    )
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        ids = cur.fetchall()
-        for row in ids:
-            id = row[0]
-            break
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-        return id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
-def get_gics_sector_id_from_industry_group_id(conn, industry_group_id: int) -> int:
+def get_gics_sector_id_from_industry_group_id(
+    engine: Engine, industry_group_id: int
+) -> int | None:
     logger.debug("Started")
     table = "securities.gics_industry_group"
-    sector_id = 0
     # create a list of columns to get from the table
     table_columns = "sector_id"
+    condition = "id = :industry_group_id"
+    data = {"industry_group_id": industry_group_id}
 
-    select_stmt = (
-        f"SELECT {table_columns} FROM {table} WHERE id = '{industry_group_id}'"
-    )
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        sector_ids = cur.fetchall()
-        for row in sector_ids:
-            sector_id = row[0]
-            break
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-        return sector_id
-
-    # if sector_ids:
-    #     for row in sector_ids:
-    #         sector_id = row[0]
-    #         return sector_id
-
-    # logger.debug(
-    #     f"Industry_group_name {industry_group_id} cannot be found in {table}"
-    # )
-    # return 0
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result
 
 
 def add_tickers(conn, ticker_list: pd.DataFrame) -> None:
@@ -842,26 +689,19 @@ def add_or_update_ohlcvs(conn, daily_price_list: pd.DataFrame) -> None:
             cur.close()
 
 
-def get_watchlist_id_from_code(conn, code: str) -> int:
+def get_watchlist_id_from_code(engine: Engine, code: str) -> int | None:
     logger.debug("Started")
     table = "securities.watchlist"
     id = 0
 
     # create a list of columns to get from the table
     table_columns = "id"
+    condition = "code = :code"
+    data = {"code": code}
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE code = '{code}'"
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition}"
+    sql = text(select_stmt)
 
-    try:
-        cur = conn.cursor()
-        cur.execute(select_stmt)
-        ids = cur.fetchall()
-        for row in ids:
-            id = row[0]
-            break
-    except (Exception, psycopg2.Error) as error:
-        logger.exception("")
-    finally:
-        if conn:
-            cur.close()
-        return id
+    with engine.connect() as connection:
+        result = connection.execute(sql, data).fetchone()
+        return result[0] if result is not None else result

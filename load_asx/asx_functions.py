@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone
 
 import pandas as pd
+from sqlalchemy import Engine, text
 
 from securities_load.securities.securities_table_functions import (
     get_exchange_id,
@@ -40,12 +41,17 @@ def clean_asx_company_gics_codes(company_gics_codes: pd.DataFrame) -> pd.DataFra
 
 
 def transform_asx_company_gics_codes(
-    conn, clean_company_gics_codes: pd.DataFrame
+    engine: Engine, clean_company_gics_codes: pd.DataFrame
 ) -> pd.DataFrame:
     logger.debug("Started")
 
-    exchange_id = get_exchange_id(conn, "XASX")
-    ticker_type_id = get_ticker_type_id(conn, "stock")
+    exchange_code = "XASX"
+
+    exchange_id = get_exchange_id(engine, exchange_code)
+    if exchange_id == None:
+        raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
+
+    ticker_type_id = get_ticker_type_id(engine, "stock")
 
     clean_company_gics_codes = clean_company_gics_codes.assign(
         ticker_type_id=ticker_type_id
@@ -66,19 +72,19 @@ def transform_asx_company_gics_codes(
 
     clean_company_gics_codes["gics_sector_id"] = clean_company_gics_codes[
         ["gics_sector_name"]
-    ].map(lambda x: get_gics_sector_id_from_name(conn, x))
+    ].map(lambda x: get_gics_sector_id_from_name(engine, x))
 
     clean_company_gics_codes["gics_industry_group_id"] = clean_company_gics_codes[
         ["gics_industry_group_name"]
-    ].map(lambda x: get_gics_industry_group_id_from_name(conn, x))
+    ].map(lambda x: get_gics_industry_group_id_from_name(engine, x))
 
     clean_company_gics_codes["gics_industry_id"] = clean_company_gics_codes[
         ["gics_industry_name"]
-    ].map(lambda x: get_gics_industry_id_from_name(conn, x))
+    ].map(lambda x: get_gics_industry_id_from_name(engine, x))
 
     clean_company_gics_codes["gics_sub_industry_id"] = clean_company_gics_codes[
         ["gics_sub_industry_name"]
-    ].map(lambda x: get_gics_sub_industry_id_from_name(conn, x))
+    ].map(lambda x: get_gics_sub_industry_id_from_name(engine, x))
 
     clean_company_gics_codes.drop(
         columns=[
@@ -108,13 +114,19 @@ def read_asx_listed_companies() -> pd.DataFrame:
 
 
 def transform_asx_listed_companies(
-    conn, asx_listed_companies: pd.DataFrame
+    engine: Engine, asx_listed_companies: pd.DataFrame
 ) -> pd.DataFrame:
     """Read in the ASX listed companies csv file."""
 
     logger.debug("Started")
-    exchange_id = get_exchange_id(conn, "XASX")
-    ticker_type_id = get_ticker_type_id(conn, "stock")
+
+    exchange_code = "XASX"
+
+    exchange_id = get_exchange_id(engine, exchange_code)
+    if exchange_id == None:
+        raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
+
+    ticker_type_id = get_ticker_type_id(engine, "stock")
 
     columns = ["ticker", "name", "gics_industry_group", "listed_date", "market_cap"]
     asx_listed_companies.columns = columns
@@ -125,10 +137,10 @@ def transform_asx_listed_companies(
     )
     asx_listed_companies["gics_industry_group_id"] = asx_listed_companies[
         "gics_industry_group"
-    ].map(lambda x: get_gics_industry_group_id_from_name(conn, x))
+    ].applymap(lambda x: get_gics_industry_group_id_from_name(engine, x))
     asx_listed_companies["gics_sector_id"] = asx_listed_companies[
         "gics_industry_group_id"
-    ].map(lambda x: get_gics_sector_id_from_industry_group_id(conn, x))
+    ].applymap(lambda x: get_gics_sector_id_from_industry_group_id(engine, x))
     asx_listed_companies.drop(
         columns=["gics_industry_group", "market_cap"], inplace=True
     )
@@ -155,12 +167,17 @@ def read_asx_indices() -> pd.DataFrame:
     return indices
 
 
-def transform_asx_indices(conn, indices: pd.DataFrame) -> pd.DataFrame:
+def transform_asx_indices(engine: Engine, indices: pd.DataFrame) -> pd.DataFrame:
     """Cleans and transforms the ASX indices"""
     logger.debug("Started")
 
-    exchange_id = get_exchange_id(conn, "XASX")
-    ticker_type_id = get_ticker_type_id(conn, "index")
+    exchange_code = "XASX"
+
+    exchange_id = get_exchange_id(engine, exchange_code)
+    if exchange_id == None:
+        raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
+
+    ticker_type_id = get_ticker_type_id(engine, "index")
 
     transformed_indices = indices.iloc[:, 0].str.split(pat="(", expand=True)
     transformed_indices.columns = ["name", "ticker"]
