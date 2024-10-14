@@ -5,9 +5,9 @@ Author: Rob Bebbington
 CRUD functions for polygon tables.
 """
 
+import pandas as pd
 import psycopg2
 import psycopg2.extras
-import pandas as pd
 
 
 def read_ticker_types(engine):
@@ -101,7 +101,7 @@ def add_tickers(conn, ticker_data):
     table = "polygon.ticker"
 
     # Correct currency names
-    
+
     # create a list of columns from the dataframe
     table_columns = list(ticker_data.columns)
     columns = ",".join(table_columns)
@@ -132,7 +132,8 @@ def add_ohlcv(conn, ohlcv_data):
     """
 
     table = "polygon.ohlcv"
-
+    # print(ohlcv_data.shape)
+    # print(ohlcv_data.head())
     # create a list of columns from the dataframe
     table_columns = list(ohlcv_data.columns)
     columns = ",".join(table_columns)
@@ -214,6 +215,7 @@ def add_dividends(conn, dividend_data):
         if conn:
             cur.close()
             # print("PostgreSQL cursor is closed")
+
 
 def read_tickers(engine, market):
     """

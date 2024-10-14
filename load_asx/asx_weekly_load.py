@@ -2,7 +2,7 @@ import logging
 
 import pandas as pd
 
-from securities_load.load_asx.load_asx_gics_codes import load_asx_gics_codes
+from securities_load.load_asx.load_asx_ohlcv import load_asx_ohlcv
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -14,6 +14,6 @@ logging.basicConfig(
     style="{",
 )
 
-logger.info("run_load_asx_gics_codes started")
+logger.info("run_load_asx_indices started")
 
-load_asx_gics_codes()
+load_asx_ohlcv(period="1mo")

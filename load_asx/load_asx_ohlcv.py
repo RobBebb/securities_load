@@ -2,6 +2,7 @@ import logging
 
 import pandas as pd
 import yfinance as yf
+from dotenv import load_dotenv
 from pyrate_limiter import Duration, Limiter, RequestRate
 from requests import Session
 from requests_cache import CacheMixin, SQLiteCache
@@ -26,6 +27,8 @@ def load_asx_ohlcv(period: str = "5d") -> None:
     Args:
         period (str): 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
     """
+    load_dotenv()
+    logger = logging.getLogger(__name__)
 
     # disable chained assignments
     pd.options.mode.chained_assignment = None

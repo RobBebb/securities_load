@@ -1,7 +1,6 @@
 import logging
 
 import pandas as pd
-from dotenv import load_dotenv
 
 from securities_load.load_asx.load_asx_ohlcv import load_asx_ohlcv
 
@@ -17,6 +16,4 @@ logging.basicConfig(
 
 logger.info("Started")
 
-load_dotenv()
-
-load_asx_ohlcv(period="5y")
+load_asx_ohlcv(period="1mo")

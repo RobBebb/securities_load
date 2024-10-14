@@ -19,3 +19,5 @@ securities/__pycache__/*.pyc
 securities/.env
 securities/__pycache__/postgresql_database_functions.cpython-311.pyc
 securities/__pycache__/postgresql_database_functions.cpython-311.pyc
+dags/.env
+securities/__pycache__/postgresql_database_functions.cpython-311.pyc

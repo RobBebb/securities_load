@@ -1,7 +1,6 @@
 import logging
 
 import pandas as pd
-from dotenv import load_dotenv
 
 from securities_load.load_asx.load_asx_indices import load_asx_indices
 
@@ -16,7 +15,5 @@ logging.basicConfig(
 )
 
 logger.info("run_load_asx_indices started")
-
-load_dotenv()
 
 load_asx_indices()

@@ -104,7 +104,7 @@ def sqlalchemy_engine() -> Engine:
     #     sys.exit(1)
     # # print("All good, Connection successful!")
     # return conn
-    # load_dotenv()
+    load_dotenv()
 
     user = os.environ["DB_USER"]
     password = os.environ["DB_PASS"]

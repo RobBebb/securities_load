@@ -4,21 +4,23 @@ Author: Rob Bebbington
 
 Functions to access polygon.io.
 """
-from datetime import datetime as dt
-import os
+
 import logging
-from dotenv import load_dotenv
+import os
+from datetime import datetime as dt
+from datetime import timezone as tz
+
 import pandas as pd
 from dateutil.relativedelta import relativedelta
-from polygon import RESTClient
-from polygon import exceptions
+from dotenv import load_dotenv
+from polygon import RESTClient, exceptions
 from polygon.rest.models import (
+    Dividend,
     Exchange,
-    TickerTypes,
-    Ticker,
     GroupedDailyAgg,
     Split,
-    Dividend,
+    Ticker,
+    TickerTypes,
 )
 
 
@@ -88,7 +90,8 @@ def get_ticker_types():
     Returns a dataframe.
     docs
     https://polygon.io/docs/stocks/get_v3_reference_tickers_types
-    https://polygon-api-client.readthedocs.io/en/latest/Reference.html#get-ticker-types"""
+    https://polygon-api-client.readthedocs.io/en/latest/Reference.html#get-ticker-types
+    """
 
     # client = RESTClient("XXXXXX") # hardcoded api_key is used
     key = os.environ["POLYGON"]
@@ -192,18 +195,34 @@ def get_tickers():
                 # add the list to the dataframe as a row
                 ticker_data.loc[len(ticker_data)] = row
         print(f"{ticker_data.shape[0]} tickers read from polygon.")
-        ticker_data.loc[ticker_data.currency_name == 'United States Dollar', 'currency_name'] = 'US Dollar'
-        ticker_data.loc[ticker_data.currency_name == 'USD', 'currency_name'] = 'US Dollar'
-        ticker_data.loc[ticker_data.currency_name == 'usd', 'currency_name'] = 'US Dollar'
-        ticker_data.loc[ticker_data.currency_name == 'Japanese Yen', 'currency_name'] = 'Yen'
-        ticker_data.loc[ticker_data.currency_name == 'Great Britian Pound', 'currency_name'] = 'Pound Sterling'
-        ticker_data.loc[ticker_data.currency_name == 'Great Britain Pound', 'currency_name'] = 'Pound Sterling'
-        ticker_data.loc[ticker_data.currency_name == 'Australian dollar', 'currency_name'] = 'Australian Dollar'
-        ticker_data.drop_duplicates(subset=['primary_exchange', 'ticker'], keep='last', inplace=True)
+        ticker_data.loc[
+            ticker_data.currency_name == "United States Dollar", "currency_name"
+        ] = "US Dollar"
+        ticker_data.loc[ticker_data.currency_name == "USD", "currency_name"] = (
+            "US Dollar"
+        )
+        ticker_data.loc[ticker_data.currency_name == "usd", "currency_name"] = (
+            "US Dollar"
+        )
+        ticker_data.loc[
+            ticker_data.currency_name == "Japanese Yen", "currency_name"
+        ] = "Yen"
+        ticker_data.loc[
+            ticker_data.currency_name == "Great Britian Pound", "currency_name"
+        ] = "Pound Sterling"
+        ticker_data.loc[
+            ticker_data.currency_name == "Great Britain Pound", "currency_name"
+        ] = "Pound Sterling"
+        ticker_data.loc[
+            ticker_data.currency_name == "Australian dollar", "currency_name"
+        ] = "Australian Dollar"
+        ticker_data.drop_duplicates(
+            subset=["primary_exchange", "ticker"], keep="last", inplace=True
+        )
         return ticker_data
     except exceptions.BadResponse as error:
         print("Non-200 response from polygon API", error)
-        
+
 
 def get_ohlcv(days=1):
     """
@@ -216,7 +235,7 @@ def get_ohlcv(days=1):
     https://polygon.io/docs/stocks/get_v2_aggs_grouped_locale_us_market_stocks__date
     https://polygon-api-client.readthedocs.io/en/latest/Aggs.html#get-grouped-daily-aggs
     """
-    logging.info(f'days is {days}')
+    logging.info(f"days is {days}")
     # client = RESTClient("XXXXXX") # hardcoded api_key is used
     key = os.environ["POLYGON"]
     try:
@@ -241,17 +260,16 @@ def get_ohlcv(days=1):
     ]
 
     # add the column names to the dataframe
-    ohlcv_data = pd.DataFrame(columns=dataframe_columns)
-
-    now = dt.utcnow()
+    ohlcv_list = []
+    now = dt.now(tz.utc)
 
     # end_date = f"{now.year}-{now.month}-{now.day}"
     # print(end_date)
 
     ohlcv_date = now - relativedelta(days=days)
     ohlcv_string_date = ohlcv_date.strftime("%Y-%m-%d")
-    logging.info(f'ohlcv date is {ohlcv_date}.')
-    print(ohlcv_date)
+    logging.info(f"ohlcv date is {ohlcv_date}.")
+    # print(ohlcv_date)
 
     try:
         # get the ohlcv from polygon
@@ -267,7 +285,7 @@ def get_ohlcv(days=1):
                     agg.close,
                     agg.high,
                     agg.low,
-                    agg.transactions,
+                    agg.transactions or 0,
                     agg.open,
                     agg.otc,
                     dt.fromtimestamp(int(agg.timestamp) / 1000),
@@ -275,16 +293,19 @@ def get_ohlcv(days=1):
                     agg.vwap,
                     ohlcv_date,
                 ]
-
+                # print(row)
                 # add the list to the dataframe as a row
-                ohlcv_data.loc[len(ohlcv_data)] = row
-        print(f"{ohlcv_data.shape[0]} ohlcv rows read from polygon.")
+                # ohlcv_data.loc[len(ohlcv_data)] = row
+                ohlcv_list.append(row)
+        ohlcv_data = pd.DataFrame(ohlcv_list, columns=dataframe_columns)
+        # print(f"{ohlcv_data.shape}")
+        # print(f"{ohlcv_data.shape[0]} ohlcv rows read from polygon.")
         return ohlcv_data
     except exceptions.BadResponse as error:
         print("Non-200 response from polygon API", error)
 
 
-def get_ohlcv_by_date(ohlcv_date=dt.utcnow()):
+def get_ohlcv_by_date(ohlcv_date=dt.now(tz.utc)):
     """
     Get the daily open, high, low, and close (OHLC) for the entire
     stocks/equities markets for one day.
@@ -320,7 +341,7 @@ def get_ohlcv_by_date(ohlcv_date=dt.utcnow()):
     ]
 
     # add the column names to the dataframe
-    ohlcv_data = pd.DataFrame(columns=dataframe_columns)
+    ohlcv_list = []
 
     ohlcv_string_date = ohlcv_date.strftime("%Y-%m-%d")
     print(f"get_ohlcv_by_date date is {ohlcv_date}")
@@ -339,7 +360,7 @@ def get_ohlcv_by_date(ohlcv_date=dt.utcnow()):
                     agg.close,
                     agg.high,
                     agg.low,
-                    agg.transactions,
+                    agg.transactions or 0,
                     agg.open,
                     agg.otc,
                     dt.fromtimestamp(int(agg.timestamp) / 1000),
@@ -348,7 +369,8 @@ def get_ohlcv_by_date(ohlcv_date=dt.utcnow()):
                     ohlcv_date,
                 ]
                 # add the list to the dataframe as a row
-                ohlcv_data.loc[len(ohlcv_data)] = row
+                ohlcv_list.append(row)
+        ohlcv_data = pd.DataFrame(ohlcv_list, columns=dataframe_columns)
         print(f"{ohlcv_data.shape[0]} ohlcv rows read from polygon.")
         return ohlcv_data
     except exceptions.BadResponse as error:
@@ -380,7 +402,7 @@ def get_splits(days=28):
     # add the column names to the dataframe
     split_data = pd.DataFrame(columns=dataframe_columns)
 
-    now = dt.utcnow()
+    now = dt.now(tz.utc)
 
     # end_date = f"{now.year}-{now.month}-{now.day}"
     # print(end_date)
@@ -445,7 +467,7 @@ def get_dividends(days=28):
     # add the column names to the dataframe
     dividend_data = pd.DataFrame(columns=dataframe_columns)
 
-    now = dt.utcnow()
+    now = dt.now(tz.utc)
 
     # end_date = f"{now.year}-{now.month}-{now.day}"
     # print(end_date)

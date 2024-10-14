@@ -26,13 +26,14 @@ from securities_load.securities.securities_table_functions import (
     get_ticker_using_id,
     get_tickers_using_exchange_code,
     get_watchlist_id_from_code,
+    retrieve_ohlcv_from_to,
     retrieve_ohlcv_last_n_days,
 )
 
-load_dotenv()
+# load_dotenv()
 
 # Open a connection
-engine = sqlalchemy_engine()
+# engine = sqlalchemy_engine()
 
 module_logger = logging.getLogger(__name__)
 
@@ -53,11 +54,11 @@ def test_get_ticker_type_id_not_found():
 
 
 def test_get_exchange_id_successful():
-    assert get_exchange_id(engine, "XASX") == 1
+    assert get_exchange_id("XASX") == 1
 
 
 def test_get_exchange_id_not_found():
-    assert get_exchange_id(engine, "ASX") == None
+    assert get_exchange_id("ASX") == None
 
 
 def test_get_exchange_code_successful():
@@ -193,8 +194,18 @@ def test_get_tickers_using_exchange_code_not_found():
 
 
 def test_retrieve_ohlcv_last_n_days_successful():
-    print(retrieve_ohlcv_last_n_days(engine, "XNAS", "GOOGL", 5))
+    assert len(retrieve_ohlcv_last_n_days(engine, "XNAS", "GOOGL", 5)) == 5
 
 
 def test_retrieve_ohlcv_last_n_days_not_found():
     assert len(retrieve_ohlcv_last_n_days(engine, "XNAS", "XXXX", 5)) == 0
+
+
+def test_retrieve_ohlcv_from_to_successful():
+    assert (
+        len(retrieve_ohlcv_from_to("XNAS", "GOOGL", "2024-09-01", "2024-09-30")) == 20
+    )
+
+
+def test_retrieve_ohlcv_from_to_not_found():
+    assert len(retrieve_ohlcv_from_to("XNAS", "XXXX", "2026-01-01", "2026-01-25")) == 0

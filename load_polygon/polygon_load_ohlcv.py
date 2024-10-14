@@ -37,6 +37,7 @@ def load_ohlcvs(days=2):
         ohlcv_data = get_ohlcv(days=day)
         # Write the data to the local polygon database
         if ohlcv_data is not None:
+            # print(ohlcv_data.shape)
             add_ohlcv(conn, ohlcv_data)
 
     # Close the connection

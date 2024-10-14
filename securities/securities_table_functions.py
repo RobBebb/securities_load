@@ -3,8 +3,10 @@ import logging
 import pandas as pd
 import psycopg2
 import psycopg2.extras
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import NoResultFound
+
+from securities_load.securities.postgresql_database_functions import sqlalchemy_engine
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,11 @@ def retrieve_ohlcv_from_to(
         end_date - latest date to get data for
     """
 
+    # engine = sqlalchemy_engine()
+    # print("Got engine")
+    # print(f"Exchange_code is: {exchange_code}")
     exchange_id = get_exchange_id(engine, exchange_code)
+    print(f"Exchange_id is: {exchange_id}")
     if exchange_id == None:
         raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
 
@@ -203,6 +209,10 @@ def get_exchange_id(engine: Engine, code: str) -> int | None:
         None if not found
     """
     logger.debug(f"Started with code {code}")
+
+    # engine = sqlalchemy_engine()
+    # print("Got engine")
+    # print(f"Exchange_code is: {code}")
 
     table = "securities.exchange"
     table_columns = "id"
