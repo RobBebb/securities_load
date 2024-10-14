@@ -10,9 +10,6 @@ import os
 
 from dotenv import load_dotenv
 
-schema = os.environ["DB_SCHEMA"]
-
-from securities.postgresql_database_functions import connect
 from securities_load.load_polygon.polygon_to_securities_table_functions import (
     add_dividends,
     add_etp_tickers,
@@ -20,6 +17,7 @@ from securities_load.load_polygon.polygon_to_securities_table_functions import (
     add_splits,
     add_stock_tickers,
 )
+from securities_load.securities.postgresql_database_functions import connect
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -40,9 +38,9 @@ conn = connect()
 
 # add_dividends(conn)
 # add_splits(conn)
-# FIXME For indices duplicates are added as the primary_exchange is NULL.
-# Need to find a way around it.
-# add_index_tickers(conn)
+# # FIXME For indices duplicates are added as the primary_exchange is NULL.
+# # Need to find a way around it.
+# # add_index_tickers(conn)
 # add_stock_tickers(conn)
 # add_etp_tickers(conn)
 add_ohlcvs(conn)
