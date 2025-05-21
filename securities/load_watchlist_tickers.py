@@ -1,7 +1,4 @@
 import logging
-from datetime import datetime, timezone
-
-import pandas as pd
 
 from securities_load.securities.postgresql_database_functions import (
     connect,
@@ -12,7 +9,6 @@ from securities_load.securities.securities_file_functions import (
     transform_watchlist_tickers,
 )
 from securities_load.securities.securities_table_functions import (
-    add_or_update_tickers,
     add_or_update_watchlist_tickers,
 )
 
@@ -33,11 +29,11 @@ def load_watchlist_tickers() -> None:
     # Write the data to the local polygon database
     # if ticker_list is not None:
     #     add_tickers(conn, ticker_list)
-    print(watchlist_tickers.head())
+    # print(watchlist_tickers.head())
     watchlist_tickers_transformed = transform_watchlist_tickers(
         engine, watchlist_tickers
     )
-    print(watchlist_tickers_transformed.head())
+    # print(watchlist_tickers_transformed.head())
     module_logger.debug("Transformed")
 
     if watchlist_tickers_transformed is not None:

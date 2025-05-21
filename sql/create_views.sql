@@ -1,0 +1,29 @@
+-- DROP VIEW securities.vw_ticker;
+-- CREATE OR REPLACE VIEW securities.vw_ticker AS
+-- SELECT
+--   t.id AS ticker_id,
+--   t.ticker AS ticker,
+--   e.code AS exchange_code,
+--   e.currency_code AS currency_code,
+--   t.name AS name
+-- FROM
+--   securities.ticker t
+--   INNER JOIN securities.exchange e ON t.exchange_id = e.id;
+
+-- DROP VIEW securities.vw_ohlcv;
+-- CREATE OR REPLACE VIEW securities.vw_ohlcv AS
+-- SELECT
+--   t.ticker AS ticker,
+--   e.code AS exchange_code,
+--   e.currency_code AS currency_code,
+--   t.name AS name,
+--   o.date as date,
+--   o.open as open,
+--   o.high as high,
+--   o.low as low,
+--   o.close as close,
+--   o.volume as volume
+-- FROM
+--   securities.ticker t
+--   INNER JOIN securities.exchange e ON t.exchange_id = e.id
+--   INNER JOIN securities.ohlcv o ON t.id = o.ticker_id;

@@ -1,0 +1,74 @@
+name,symbol,asx_symbol,yahoo_symbol,country,currency,ticker_type,ticker_sub_type
+ASX All Ordinaries,AORD,XAO,^AORD,AUS,AUD,index,additional
+S&P ASX 100,AXTO,XTO,^ATOI,AUS,AUD,index,additional
+S&P ASX 20,ATLI,ATLI,^ATLI,AUS,AUD,index,additional
+S&P ASX 200 2X Inverse Daily,XNV,XNV,^AXNV,AUS,AUD,index,other
+S&P ASX 200 2X Leverage Daily,XLD,XLD,^AXLD,AUS,AUD,index,other
+S&P ASX 200 A REIT,XPJ,XPJ,^AXPJ,AUS,AUD,index,primary sectors
+S&P ASX 200 Banks,XBK,XBK,^AXBK,AUS,AUD,index,other
+S&P ASX 200 Banks Net Total Return,XBN,XBN,^AXBN,AUS,AUD,index,other
+S&P ASX 200 Banks Total Return,XBT,XBT,,AUS,AUD,index,other
+S&P ASX 200 Communication Services,XTJ,XTJ,^AXTJ,AUS,AUD,index,primary sectors
+S&P ASX 200 Consumer Discretionary,XDJ,XDJ,^AXDJ,AUS,AUD,index,primary sectors
+S&P ASX 200 Consumer Staples,XSJ,XSJ,^AXSJ,AUS,AUD,index,primary sectors
+S&P ASX 200 DEC NTR Dow Jones,XNI,XNI,^AXNI,AUS,AUD,index,other
+S&P ASX 200 DEC TR Dow Jones,XRI,XRI,^AXRI,AUS,AUD,index,other
+S&P ASX 200 Emerging Companies TR,XET,XET,^AXET,AUS,AUD,index,other
+S&P ASX 200 Energy,AXEJ,XEJ,^AXEJ,AUS,AUD,index,primary sectors
+S&P ASX 200 Equal Weight,XEW,XEW,^AXEW,AUS,AUD,index,other
+S&P ASX 200 Ex S&P ASX 100,XJM,XJM,^AXJM,AUS,AUD,index,other
+S&P ASX 200 Ex S&P ASX 100 TR,XJS,XJS,^AXJS,AUS,AUD,index,other
+S&P ASX 200 Financial,XFJ,XFJ,^AXFJ,AUS,AUD,index,primary sectors
+S&P ASX 200 Financials ex A REITS,XXJ,XXJ,^AXXJ,AUS,AUD,index,other
+S&P ASX 200 Futures 4.5% Decrement Index Aonia AUD TR,XFR,XFR,^AXFR,AUS,AUD,index,other
+S&P ASX 200 Futures Aonia in AUD ER,XFE,XFE,^AXFE,AUS,AUD,index,other
+S&P ASX 200 Futures Aonia in AUD TR,XFN,XFN,^AXFN,AUS,AUD,index,other
+S&P ASX 200 Gross Total Return,XJT,XJT,^AXJT,AUS,AUD,index,other
+S&P ASX 200 Health Care,XHJ,XHJ,^AXHJ,AUS,AUD,index,primary sectors
+S&P ASX 200,AXJO,XJO,^AXJO,AUS,AUD,index,major
+S&P ASX 200 Industrials,AXNJ,XNJ,^AXNJ,AUS,AUD,index,primary sectors
+S&P ASX 200 Information Technology,XIJ,XIJ,^AXIJ,AUS,AUD,index,primary sectors
+S&P ASX 200 Materials,AXMJ,XMJ,^AXMJ,AUS,AUD,index,primary sectors
+S&P ASX 200 Net Total Return,XNT,XNT,^AXNT,AUS,AUD,index,other
+S&P ASX 200 Real Estate,XRE,XRE,^AXRE,AUS,AUD,index,other
+S&P ASX 200 Real Inverse Daily,XIN,XIN,^AXIN,AUS,AUD,index,other
+S&P ASX 200 Resources,XJR,XJR,^AXJR,AUS,AUD,index,primary sectors
+S&P ASX 200 Utilities,XUJ,XUJ,^AXUJ,AUS,AUD,index,primary sectors
+S&P ASX 200 VIX,XVI,XVI,^AXVI,AUS,AUD,index,other
+S&P ASX 300,AXKO,XKO,^AXKO,AUS,AUD,index,additional
+S&P ASX 300 Metals and Mining,AXMM,XMM,^AXMM,AUS,AUD,index,primary sectors
+S&P ASX 300 Shareholder Yield Index,XSY,XSY,^AXSY,AUS,AUD,index,other
+S&P ASX 50,AFLI,AFLI,^AFLI,AUS,AUD,index,additional
+S&P ASX Agribusiness,XAG,XAG,^AXAG,AUS,AUD,index,other
+S&P ASX All Australian 200,AXAT,XAT,^AXAT,AUS,AUD,index,other
+S&P ASX All Australian 50 ,AXAF,XAF,^AXAF,AUS,AUD,index,additional
+S&P ASX All Ordinaries Gold,AXGD,XGD,^AXGD,AUS,AUD,index,primary sectors
+S&P ASX All Technology,XTX,XTX,^AXTX,AUS,AUD,index,primary sectors
+S&P ASX Buy Write,XBW,XBW,,AUS,AUD,index,other
+S&P ASX Dividend Opportunities,XDI,XDI,^AXDI,AUS,AUD,index,other
+S&P ASX Emerging Companies,XEC,XEC,^AXEC,AUS,AUD,index,other
+S&P ASX Franked Dividend,XFD,XFD,,AUS,AUD,index,other
+S&P ASX Franked Dividend Index Total Return,XFT,XFT,,AUS,AUD,index,other
+S&P ASX Small Ordinaries,AXSO,XSO,^AXSO,AUS,AUD,index,additional
+S&P ASX 200 A REIT Equal Weight,XAE,XAE,^AXAE,AUS,AUD,index,other
+Vaneck Franked Div Ein,YFDI,YFDI,,AUS,AUD,index,other
+S&P ASX Midcap 50,AXMD,XMD,^AXMD,AUS,AUD,index,additional
+S&P TSX Composite,GSPTSE,,^GSPTSE,CAN,CAD,index,major
+S&P TSX Smallcap,SPTSES,,^SPTSES,CAN,CAD,index,additional
+S&P TSX Venture Composite,SPCDNX,,^SPCDNX,CAN,CAD,index,additional
+S&P TSX Completion,SPTSEM,,^SPTSEM,CAN,CAD,index,additional
+S&P TSX 60,SPTSE,,^SPTSE,CAN,CAD,index,additional
+S&P 500,SPX,,^GSPC,USA,USD,index,major
+Dow Jones Industrial Average,DJI,,^DJI,USA,USD,index,major
+Nasdaq 100,NDX,,^NDX,USA,USD,index,major
+Nasdaq Composite,IXIC,,^IXIC,USA,USD,index,major
+Russell 2000 (Small Cap),RUT,,^RUT,USA,USD,index,additional
+Dow Jones Transportation,DJT,,^DJT,USA,USD,index,additional
+Dow Jones Utility,DJU,,^DJU,USA,USD,index,additional
+Dow Jones Composite,DJA,,^DJA,USA,USD,index,additional
+NYSE AMEX Composite,XAX,,^XAX,USA,USD,index,additional
+S&P 100,OEX,,^OEX,USA,USD,index,additional
+CBOE Colatility Index (S&P 500 VIX),VIX,,^VIX,USA,USD,index,additional
+FTSE 100,FTSE,,^FTSE,GBR,GBP,index,major
+DAX,GDAXI,,^GDAXI,DEU,EUR,index,major
+Nikkei 225,N225,,^N225,JPN,JPY,index,major

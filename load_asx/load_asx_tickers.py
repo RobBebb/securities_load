@@ -1,7 +1,5 @@
 import logging
-from datetime import datetime, timezone
 
-import pandas as pd
 from dotenv import load_dotenv
 
 from securities_load.load_asx.asx_functions import (

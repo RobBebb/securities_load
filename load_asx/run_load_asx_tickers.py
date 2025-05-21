@@ -1,7 +1,5 @@
 import logging
 
-import pandas as pd
-
 from securities_load.load_asx.load_asx_tickers import load_asx_tickers
 
 logger = logging.getLogger(__name__)
@@ -16,3 +14,4 @@ logging.basicConfig(
 
 logger.info("run_load_asx_indices started")
 load_asx_tickers()
+logger.info("run_load_asx_indices completed")

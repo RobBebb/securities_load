@@ -1,8 +1,6 @@
 import logging
 
-import pandas as pd
-
-from securities_load.load_asx.load_asx_ohlcv import load_asx_ohlcv
+from load_asx.load_asx_ohlcv_from_yahoo import load_asx_ohlcv_from_yahoo
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -16,4 +14,6 @@ logging.basicConfig(
 
 logger.info("Started")
 
-load_asx_ohlcv(period="1mo")
+load_asx_ohlcv_from_yahoo(period="5d")
+
+logger.info("Completed")

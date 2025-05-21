@@ -6,7 +6,6 @@ Get the data from polygon and load it into the local polygon database.
 """
 
 import logging
-import os
 
 from dotenv import load_dotenv
 
@@ -36,13 +35,13 @@ load_dotenv()
 # Open a connection
 conn = connect()
 
-# add_dividends(conn)
-# add_splits(conn)
-# # FIXME For indices duplicates are added as the primary_exchange is NULL.
-# # Need to find a way around it.
-# # add_index_tickers(conn)
 # add_stock_tickers(conn)
 # add_etp_tickers(conn)
+# add_dividends(conn)
+# add_splits(conn)
+# FIXME For indices duplicates are added as the primary_exchange is NULL.
+# Need to find a way around it.
+# add_index_tickers(conn)
 add_ohlcvs(conn)
 
 # Close the connection

@@ -62,22 +62,25 @@ INSERT INTO securities.gics_sector (code, name, aus_index_ticker, definition, st
 	('45', 'Information Technology', 'XIJ', 'The Information Technology Sector comprises companies that offer software and information technology services, manufacturers and distributors of technology hardware & equipment such as communications equipment, cellular phones, computers & peripherals, electronic equipment and related instruments, and semiconductors.', '1999-01-01', NULL),
 	('50', 'Communication Services', 'XTJ', 'The Communication Services Sector includes companies that facilitate communication and offer related content and information through various mediums. It includes telecom and media & entertainment companies including producers of interactive gaming products and companies engaged in content and information creation or distribution through proprietary platforms.', '1999-01-01', NULL),
 	('55', 'Utilities', 'XUJ', 'The Utilities Sector comprises utility companies such as electric, gas and water utilities. It also includes independent power producers & energy traders and companies that engage in generation and distribution of electricity using renewable sources.', '1999-01-01', NULL),
-	('60', 'Real Estate', 'XPJ', 'The Real Estate Sector contains companies engaged in real estate development and operation. It also includes companies offering real estate related services and Equity Real Estate Investment Trusts (REITs).', '1999-01-01', NULL);
+	('60', 'Real Estate', 'XPJ', 'The Real Estate Sector contains companies engaged in real estate development and operation. It also includes companies offering real estate related services and Equity Real Estate Investment Trusts (REITs).', '1999-01-01', NULL),
+	('90', 'Class Pend', '', 'Classification Pending.', '1999-01-01', NULL),
+	('95', 'Not Applic', '', 'Not Applicable', '1999-01-01', NULL);
 
 
 CREATE TABLE IF NOT EXISTS securities.gics_industry_group (
 	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     code char(4) UNIQUE NOT NULL,
     name varchar(255) NOT NULL,
-    sector_code char(2) NOT NULL,
+    sector_id integer DEFAULT NULL,
+    sector_code char(2) DEFAULT NULL,
     start_date date DEFAULT NULL,
     end_date date DEFAULT NULL,
     created_date timestamp with time zone DEFAULT current_timestamp,
     last_updated_date timestamp with time zone,
 	CONSTRAINT FK_gics_industry_group_gics_sector 
-        FOREIGN KEY(sector_code)
-        REFERENCES securities.gics_sector(code)
-        ON DELETE CASCADE);
+        FOREIGN KEY(sector_id)
+        REFERENCES securities.gics_sector(id)
+        ON DELETE SET NULL);
 
 INSERT INTO securities.gics_industry_group (code, name, sector_code, start_date, end_date) VALUES
 	('1010', 'Energy', '10', '1999-01-01', NULL),
@@ -94,7 +97,7 @@ INSERT INTO securities.gics_industry_group (code, name, sector_code, start_date,
 	('3020', 'Food, Beverage & Tobacco', '30', '1999-01-01', NULL),
 	('3030', 'Household & Personal Products', '30', '1999-01-01', NULL),
 	('3510', 'Health Care Equipment & Services', '35', '1999-01-01', NULL),
-	('3520', 'Pharmaceuticals, BioTechnology & Life Sciences', '35', '1999-01-01', NULL),
+	('3520', 'Pharmaceuticals, Biotechnology & Life Sciences', '35', '1999-01-01', NULL),
 	('4010', 'Banks', '40', '1999-01-01', NULL),
 	('4020', 'Financial Services', '40', '2023-03-17', NULL),
 	('4030', 'Insurance', '40', '1999-01-01', NULL),
@@ -106,21 +109,33 @@ INSERT INTO securities.gics_industry_group (code, name, sector_code, start_date,
 	('5020', 'Media & Entertainment', '50', '2018-09-29', NULL),
 	('5510', 'Utilities', '55', '1999-01-01', NULL),
 	('6010', 'Equity Real Estate Investment Trusts (REITs)', '60', '2023-03-17', NULL),
-	('6020', 'Real Estate Management & Development', '60', '2023-03-17', NULL);
+	('6020', 'Real Estate Management & Development', '60', '2023-03-17', NULL),
+	('9090', 'Class Pend', '90', '1999-01-01', NULL),
+	('9595', 'Not Applic', '95', '1999-01-01', NULL);
+
+WITH subquery AS (
+    SELECT s.id, s.code
+    FROM  securities.gics_sector s, securities.gics_industry_group i WHERE s.code = i.sector_code
+)
+UPDATE securities.gics_industry_group
+SET sector_id = subquery.id
+FROM subquery
+WHERE securities.gics_industry_group.sector_code = subquery.code;
 
 CREATE TABLE IF NOT EXISTS securities.gics_industry (
 	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     code char(6) UNIQUE NOT NULL,
     name varchar(255) NOT NULL,
-    industry_group_code char(4) NOT NULL,
+    industry_group_id integer DEFAULT NULL,
+    industry_group_code char(4) DEFAULT NULL,
     start_date date DEFAULT NULL,
     end_date date DEFAULT NULL,
     created_date timestamp with time zone DEFAULT current_timestamp,
     last_updated_date timestamp with time zone,
 	CONSTRAINT FK_gics_industry_gics_industry_group
-        FOREIGN KEY(industry_group_code)
-        REFERENCES securities.gics_industry_group(code)
-        ON DELETE CASCADE);
+        FOREIGN KEY(industry_group_id)
+        REFERENCES securities.gics_industry_group(id)
+        ON DELETE SET NULL);
 
 INSERT INTO securities.gics_industry (code, name, industry_group_code, start_date, end_date) VALUES
 	('101010', 'Energy Equipment & Services', '1010', '1999-01-01', NULL),
@@ -205,22 +220,34 @@ INSERT INTO securities.gics_industry (code, name, industry_group_code, start_dat
 	('601060', 'Residential REITs', '6010', '2023-03-17', NULL),
 	('601070', 'Retail REITs', '6010', '2023-03-17', NULL),
 	('601080', 'Specialized REITs', '6010', '2023-03-17', NULL),
-	('602010', 'Real Estate Management & Development', '6020', '2023-03-17', NULL);
+	('602010', 'Real Estate Management & Development', '6020', '2023-03-17', NULL),
+    ('909090', 'Class Pend', '9090', '1999-01-01', NULL),
+	('959595', 'Not Applic', '9595', '1999-01-01', NULL);
+
+WITH subquery AS (
+    SELECT g.id, g.code
+    FROM  securities.gics_industry_group g, securities.gics_industry i WHERE g.code = i.industry_group_code 
+)
+UPDATE securities.gics_industry
+SET industry_group_id = subquery.id
+FROM subquery
+WHERE securities.gics_industry.industry_group_code = subquery.code;
 
 CREATE TABLE IF NOT EXISTS securities.gics_sub_industry (
 	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     code char(8) UNIQUE NOT NULL,
     name varchar(255) NOT NULL,
     description varchar(1000) DEFAULT NULL,
-    industry_code char(6) NOT NULL,
+    industry_id integer DEFAULT NULL,
+    industry_code char(6) DEFAULT NULL,
     start_date date DEFAULT NULL,
     end_date date DEFAULT NULL,
     created_date timestamp with time zone DEFAULT current_timestamp,
     last_updated_date timestamp with time zone,
 	CONSTRAINT FK_gics_sub_industry_gics_industry 
-        FOREIGN KEY(industry_code)
-        REFERENCES securities.gics_industry(code)
-        ON DELETE CASCADE);
+        FOREIGN KEY(industry_id)
+        REFERENCES securities.gics_industry(id)
+        ON DELETE SET NULL);
 
 INSERT INTO securities.gics_sub_industry (code, name, description, industry_code, start_date, end_date) VALUES
 	('10101010', 'Oil & Gas Drilling', 'Drilling contractors or owners of drilling rigs that contract their services for drilling wells.', '101010', '1999-01-01', NULL),
@@ -427,7 +454,18 @@ INSERT INTO securities.gics_sub_industry (code, name, description, industry_code
 	('60201010', 'Diversified Real Estate Activities', 'Companies engaged in a diverse spectrum of real estate activities including real estate development & sales, real estate management, or real estate services, but with no dominant business line.', '602010', '2023-03-17', NULL),
 	('60201020', 'Real Estate Operating Companies', 'Companies engaged in operating real estate properties for the purpose of leasing & management.', '602010', '2023-03-17', NULL),
 	('60201030', 'Real Estate Development', 'Companies that develop real estate and sell the properties after development. Excludes companies classified in the Homebuilding Sub-Industry.', '602010', '2023-03-17', NULL),
-	('60201040', 'Real Estate Services', 'Real estate service providers such as real estate agents, brokers & real estate appraisers.', '602010', '2023-03-17', NULL);
+	('60201040', 'Real Estate Services', 'Real estate service providers such as real estate agents, brokers & real estate appraisers.', '602010', '2023-03-17', NULL),
+    ('90909090', 'Class Pend', '', '909090', '1999-01-01', NULL),
+	('95959595', 'Not Applic', '', '959595', '1999-01-01', NULL);
+
+WITH subquery AS (
+    SELECT i.id, i.code
+    FROM  securities.gics_industry i, securities.gics_sub_industry s WHERE i.code = s.industry_code 
+)
+UPDATE securities.gics_sub_industry
+SET industry_id = subquery.id
+FROM subquery
+WHERE securities.gics_sub_industry.industry_code = subquery.code;
 
 CREATE TABLE IF NOT EXISTS securities.gics (
     code char(8) PRIMARY KEY,
@@ -1225,10 +1263,10 @@ CREATE TABLE securities.ticker (
     figi char(12) NULL,
     name varchar(255) NULL,
 	currency_code char(4) NULL,
-    gics_sector_code char(2) NULL,
-    gics_industry_group_code char(4) NULL,
-    gics_industry_code char(6) NULL,
-    gics_sub_industry_code char(8) NULL,
+    gics_sector_id integer NULL,
+    gics_industry_group_id integer NULL,
+    gics_industry_id integer NULL,
+    gics_sub_industry_id integer NULL,
     exchange_id integer NULL,
     listed_date date NULL,
     delisted_utc timestamp NULL, 
@@ -1253,24 +1291,26 @@ CREATE TABLE securities.ticker (
         REFERENCES securities.ticker_type(id)
         ON DELETE NO ACTION,
     CONSTRAINT fk_ticker_sector
-        FOREIGN KEY(gics_sector_code)
-        REFERENCES securities.gics_sector(code)
+        FOREIGN KEY(gics_sector_id)
+        REFERENCES securities.gics_sector(id)
         ON DELETE NO ACTION,
     CONSTRAINT fk_ticker_industry_group
-        FOREIGN KEY(gics_industry_group_code)
-        REFERENCES securities.gics_industry_group(code)
+        FOREIGN KEY(gics_industry_group_id)
+        REFERENCES securities.gics_industry_group(id)
         ON DELETE NO ACTION,        
     CONSTRAINT fk_ticker_industry
-        FOREIGN KEY(gics_industry_code)
-        REFERENCES securities.gics_industry(code)
+        FOREIGN KEY(gics_industry_id)
+        REFERENCES securities.gics_industry(id)
         ON DELETE NO ACTION,
     CONSTRAINT fk_ticker_sub_industry
-        FOREIGN KEY(gics_sub_industry_code)
-        REFERENCES securities.gics_sub_industry(code)
+        FOREIGN KEY(gics_sub_industry_id)
+        REFERENCES securities.gics_sub_industry(id)
         ON DELETE NO ACTION);
 
 COMMENT ON COLUMN securities.ticker.name IS 'The name of the asset. For stocks/equities this will be the companies registered name. For crypto/fx this will be the name of the currency or coin pair.';
 COMMENT ON COLUMN securities.ticker.ticker IS 'The exchange symbol that this item is traded under.';
+
+CREATE INDEX IF NOT EXISTS ix_ticker_exchange_id_ticker ON securities.ticker( exchange_id, ticker );
 
 CREATE TABLE IF NOT EXISTS securities.watchlist_ticker (
 	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -1338,6 +1378,8 @@ COMMENT ON COLUMN securities.ohlcv.low IS 'The lowest price for the symbol in th
 COMMENT ON COLUMN securities.ohlcv.open IS 'The open price for the symbol in the given time period.';
 COMMENT ON COLUMN securities.ohlcv.volume IS 'The trading volume of the symbol in the given time period.';
 COMMENT ON COLUMN securities.ohlcv.volume_weighted_average_price IS 'The volume weighted average price.';
+
+CREATE INDEX IF NOT EXISTS ix_ohlcv_ticker_id ON securities.ohlcv(ticker_id);
 
 CREATE TABLE securities.dividend_type (
     code char(2) PRIMARY KEY,

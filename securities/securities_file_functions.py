@@ -1,7 +1,7 @@
 import logging
 
 import pandas as pd
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine
 
 from securities_load.securities.securities_table_functions import (
     get_ticker_id,
@@ -27,16 +27,26 @@ def transform_watchlist_tickers(
 ) -> pd.DataFrame:
     logger.debug("Started")
 
-    watchlist_tickers["watchlist_id"] = watchlist_tickers["watchlist_name"].applymap(
+    watchlist_tickers["watchlist_id"] = watchlist_tickers["watchlist_name"].apply(
         lambda x: get_watchlist_id_from_code(engine, x)
     )
     print(watchlist_tickers.head())
-    watchlist_tickers["ticker_id"] = watchlist_tickers[
-        ["exchange_code", "ticker"]
-    ].apply(lambda x: get_ticker_id(engine, *x), axis=1)
+    print(f"Data types: {watchlist_tickers.dtypes}")
+    # watchlist_tickers["ticker_id"] = watchlist_tickers[
+    #     ["exchange_code", "ticker"]
+    # ].apply(lambda x: get_ticker_id(engine, *x), axis=1)
+    watchlist_tickers["exchange_code"] = watchlist_tickers["exchange_code"].astype(str)
+    watchlist_tickers["ticker"] = watchlist_tickers["ticker"].astype(str)
+    watchlist_tickers["ticker_id"] = [
+        get_ticker_id(engine, row.exchange_code, row.ticker)  # type: ignore
+        for row in watchlist_tickers.itertuples()
+    ]
     watchlist_tickers.drop(
         columns=["watchlist_group_name", "watchlist_name", "exchange_code", "ticker"],
         inplace=True,
     )
-
+    watchlist_tickers["watchlist_id"] = watchlist_tickers["watchlist_id"].astype(float)
+    watchlist_tickers["ticker_id"] = watchlist_tickers["ticker_id"].astype(float)
+    print(watchlist_tickers.head())
+    print(watchlist_tickers.tail())
     return watchlist_tickers

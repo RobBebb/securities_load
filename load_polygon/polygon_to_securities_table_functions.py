@@ -349,7 +349,6 @@ def add_ohlcvs(conn):
         EXCLUDED.transactions, CURRENT_TIMESTAMP)"""
     insert_stmt = f"INSERT INTO {table} ({columns}) {values} {conflict};"
     # what to do on conflict
-    print(insert_stmt)
     try:
         cur = conn.cursor()
         # add the rows from the dataframe to the table

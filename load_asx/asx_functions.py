@@ -1,8 +1,7 @@
 import logging
-from datetime import datetime, timezone
 
 import pandas as pd
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine
 
 from securities_load.securities.securities_table_functions import (
     get_exchange_id,
@@ -48,11 +47,13 @@ def transform_asx_company_gics_codes(
     exchange_code = "XASX"
 
     exchange_id = get_exchange_id(engine, exchange_code)
-    if exchange_id == None:
+    if exchange_id is None:
         raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
 
     ticker_type_id = get_ticker_type_id(engine, "stock")
 
+    if ticker_type_id is None:
+        raise KeyError("No ticker type id found for 'stock'!")
     clean_company_gics_codes = clean_company_gics_codes.assign(
         ticker_type_id=ticker_type_id
     )
@@ -123,7 +124,7 @@ def transform_asx_listed_companies(
     exchange_code = "XASX"
 
     exchange_id = get_exchange_id(engine, exchange_code)
-    if exchange_id == None:
+    if exchange_id is None:
         raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
 
     ticker_type_id = get_ticker_type_id(engine, "stock")
@@ -169,7 +170,7 @@ def transform_asx_indices(engine: Engine, indices: pd.DataFrame) -> pd.DataFrame
     exchange_code = "XASX"
 
     exchange_id = get_exchange_id(engine, exchange_code)
-    if exchange_id == None:
+    if exchange_id is None:
         raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
 
     ticker_type_id = get_ticker_type_id(engine, "index")

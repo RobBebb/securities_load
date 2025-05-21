@@ -11,7 +11,7 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
-import securities_load.load_asx.load_asx_ohlcv as lao
+import load_asx.load_asx_ohlcv_from_yahoo as lao
 
 with DAG(
     dag_id="daily_aus_pipeline_dag",
@@ -22,6 +22,6 @@ with DAG(
 ) as dag:
     load_asx_ohlcvs = PythonOperator(
         task_id="polygon_load_ohlcvs",
-        python_callable=lao.load_asx_ohlcv,
+        python_callable=lao.load_asx_ohlcv_from_yahoo,
         op_kwargs={"periods": "5d"},
     )

@@ -28,8 +28,8 @@ def load_ohlcvs(days=2):
     # Open a connection
     conn = connect()
 
-    start = 0
-    stop = days
+    start = 1
+    stop = days + 1
 
     # Loop through the previous days
     for day in range(start, stop):

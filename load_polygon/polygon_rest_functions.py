@@ -7,6 +7,7 @@ Functions to access polygon.io.
 
 import logging
 import os
+from datetime import date
 from datetime import datetime as dt
 from datetime import timezone as tz
 
@@ -261,7 +262,8 @@ def get_ohlcv(days=1):
 
     # add the column names to the dataframe
     ohlcv_list = []
-    now = dt.now(tz.utc)
+    # now = dt.now(tz.utcoffset)
+    now = date.today()
 
     # end_date = f"{now.year}-{now.month}-{now.day}"
     # print(end_date)
@@ -269,7 +271,9 @@ def get_ohlcv(days=1):
     ohlcv_date = now - relativedelta(days=days)
     ohlcv_string_date = ohlcv_date.strftime("%Y-%m-%d")
     logging.info(f"ohlcv date is {ohlcv_date}.")
-    # print(ohlcv_date)
+    print(days)
+    print(ohlcv_date)
+    print(ohlcv_string_date)
 
     try:
         # get the ohlcv from polygon
@@ -293,7 +297,8 @@ def get_ohlcv(days=1):
                     agg.vwap,
                     ohlcv_date,
                 ]
-                # print(row)
+                if row[0] == "EWCZ":
+                    print(row)
                 # add the list to the dataframe as a row
                 # ohlcv_data.loc[len(ohlcv_data)] = row
                 ohlcv_list.append(row)
