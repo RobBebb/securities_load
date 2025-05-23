@@ -15,7 +15,7 @@ from securities_load.securities.securities_table_functions import (
 module_logger = logging.getLogger(__name__)
 
 
-def load_watchlist_tickers() -> None:
+def load_watchlist_tickers(watchlist_csv_file: str) -> None:
     """
     Get the tickers and load them into the equity ticker table"""
 
@@ -25,7 +25,8 @@ def load_watchlist_tickers() -> None:
     # Open a connection
     conn = connect()
     engine = sqlalchemy_engine()
-    watchlist_tickers = read_watchlist_tickers()
+    watchlist_tickers = read_watchlist_tickers(watchlist_csv_file)
+
     # Write the data to the local polygon database
     # if ticker_list is not None:
     #     add_tickers(conn, ticker_list)

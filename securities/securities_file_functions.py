@@ -11,13 +11,11 @@ from securities_load.securities.securities_table_functions import (
 logger = logging.getLogger(__name__)
 
 
-def read_watchlist_tickers() -> pd.DataFrame:
+def read_watchlist_tickers(watchlist_csv_file: str) -> pd.DataFrame:
     """Read the watchlists.csv text file. This file id a list of watchlists and their constituent tickers"""
     logger.debug("Started")
     # Read in the watcjlist csv file
-    watchlist_tickers = pd.read_csv(
-        "/home/ubuntuuser/karra/securities_load/data/watchlists.csv"
-    )
+    watchlist_tickers = pd.read_csv(watchlist_csv_file)
     logger.debug("File read")
     return watchlist_tickers
 

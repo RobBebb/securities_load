@@ -47,6 +47,7 @@ C - Option Type - Call
 
 ### Processing
 
+- Get vendor id for yahoo
 - Get watchlist_ticker.id for watchlist_ticker.code = 'Options to Download'
 - get watchlist_ticker.ticker_id's for watchlist_ticker.id
 - loop through watchlist_ticker.ticker_id's
@@ -64,6 +65,7 @@ C - Option Type - Call
 - Create option_data table in dev
 - Create option_data table in prod
 
+- get_data_vendor_id - existing
 - get_watchlist_id_from_code - existing
 - retrieve_watchlist_ticker_ids_for_watchlist_id - new function
 - get_yahoo_symbol_using_ticker_id - new function
