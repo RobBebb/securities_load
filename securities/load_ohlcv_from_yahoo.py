@@ -2,7 +2,6 @@ import logging
 
 import pandas as pd
 import yfinance as yf
-from dotenv import load_dotenv
 
 from securities_load.securities.postgresql_database_functions import (
     connect,
@@ -14,27 +13,22 @@ from securities_load.securities.securities_table_functions import (
     get_tickers_using_exchange_code,
 )
 
-# from pyrate_limiter import Duration, Limiter, RequestRate
-# from requests import Session
-# from requests_cache import CacheMixin, SQLiteCache
-# from requests_ratelimiter import LimiterMixin, MemoryQueueBucket
-
-
 logger = logging.getLogger(__name__)
 
 
-def load_asx_ohlcv_from_yahoo(period: str = "5d") -> None:
-    """_summary_
+def load_ohlcv_from_yahoo(period: str = "5d") -> None:
+    """
 
     Args:
         period (str): 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
     """
-    load_dotenv()
-    logger = logging.getLogger(__name__)
+
+    logger.debug("Started")
 
     # disable chained assignments
     pd.options.mode.chained_assignment = None
-    logger.info("Chained assignments disabled")
+    logger.debug("Chained assignments disabled")
+    pd.options.mode.copy_on_write = True
 
     input_period = period
 
@@ -42,20 +36,19 @@ def load_asx_ohlcv_from_yahoo(period: str = "5d") -> None:
     conn = connect()
     engine = sqlalchemy_engine()
 
-    # class CachedLimiterSession(CacheMixin, LimiterMixin, Session):
-    #     pass
+    YAHOO_CODE = "Yahoo"
+    EXCHANGE_CODE = "XASX"
 
-    # session = CachedLimiterSession(
-    #     limiter=Limiter(
-    #         RequestRate(2, Duration.SECOND * 6)
-    #     ),  # max 2 requests per 6 seconds
-    #     bucket_class=MemoryQueueBucket,
-    #     backend=SQLiteCache("yfinance.cache"),
-    # )
+    data_vendor_id = get_data_vendor_id(engine, YAHOO_CODE)
+    if data_vendor_id is None:
+        logger.error(f"No data_vendor_id found for YAHOO_CODE: {YAHOO_CODE}!")
+        return
 
-    data_vendor_id = get_data_vendor_id(engine, "Yahoo")
+    tickers = get_tickers_using_exchange_code(engine, EXCHANGE_CODE)
 
-    tickers = get_tickers_using_exchange_code(engine, "XASX")
+    if tickers is None:
+        logger.error(f"No tickers found for EXCHANGE_CODE: {EXCHANGE_CODE}!")
+        return
 
     for ticker_tuple in tickers:
         ticker_id = ticker_tuple[0]
@@ -289,11 +282,12 @@ def load_asx_ohlcv_from_yahoo(period: str = "5d") -> None:
             period = "max"
         else:
             period = input_period
+
         yf_ticker = yf.Ticker(yahoo_ticker)
-        message = f"Prcessing ticker: {yahoo_ticker}"
-        logger.info(message)
-        print(message)
+        logger.debug(f"Prcessing ticker: {yahoo_ticker}")
+
         df = yf_ticker.history(period=period, repair=False)
+
         if not df.empty:
             df = df.reset_index(drop=False)
             hist = df.dropna()
@@ -327,3 +321,4 @@ def load_asx_ohlcv_from_yahoo(period: str = "5d") -> None:
 
     # Close the connection
     conn.close()
+    logger.debug("Finished")

@@ -11,7 +11,7 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
-import load_asx.load_asx_ohlcv_from_yahoo as lao
+import load_asx.load_ohlcv_from_yahoo as lao
 
 with DAG(
     dag_id="daily_aus_pipeline_dag",

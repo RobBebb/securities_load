@@ -13,7 +13,6 @@ from datetime import timezone as tz
 
 import pandas as pd
 from dateutil.relativedelta import relativedelta
-from dotenv import load_dotenv
 from polygon import RESTClient, exceptions
 from polygon.rest.models import (
     Dividend,
@@ -23,6 +22,8 @@ from polygon.rest.models import (
     Ticker,
     TickerTypes,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_exchanges():
@@ -34,12 +35,14 @@ def get_exchanges():
     https://polygon-api-client.readthedocs.io/en/latest/Reference.html#get-exchanges
     """
 
+    logger.debug("Started")
+
     # client = RESTClient("XXXXXX") # hardcoded api_key is used
     key = os.environ["POLYGON"]
     try:
         client = RESTClient(api_key=key)  # POLYGON_API_KEY environment variable is used
-    except exceptions.AuthError as error:
-        print("Empty or invalid polygon API key", error)
+    except exceptions.AuthError as e:
+        logger.error(f"Empty or invalid polygon API key, error: {e}")
         return
 
     # create a list of columns names for the dataframe
@@ -79,10 +82,12 @@ def get_exchanges():
                 ]
                 # add the list to the dataframe as a row
                 exchange_data.loc[len(exchange_data)] = row
-        print(f"{exchange_data.shape[0]} exchanges read from polygon.")
+        logger.info(f"{exchange_data.shape[0]} exchanges read from polygon.")
         return exchange_data
-    except exceptions.BadResponse as error:
-        print("Non-200 response from polygon API", error)
+    except exceptions.BadResponse as e:
+        logger.error(f"Non-200 response from polygon API, error: {e}")
+
+    logger.debug("Finished")
 
 
 def get_ticker_types():
@@ -94,14 +99,15 @@ def get_ticker_types():
     https://polygon-api-client.readthedocs.io/en/latest/Reference.html#get-ticker-types
     """
 
+    logger.debug("Started")
+
     # client = RESTClient("XXXXXX") # hardcoded api_key is used
     key = os.environ["POLYGON"]
     try:
         client = RESTClient(api_key=key)  # POLYGON_API_KEY environment variable is used
-    except exceptions.AuthError as error:
-        print("Empty or invalid polygon API key", error)
+    except exceptions.AuthError as e:
+        logger.error(f"Empty or invalid polygon API key, error: {e}")
         return
-
     # create a list of columns names for the dataframe
     dataframe_columns = ["code", "description", "asset_class_type", "locale"]
     # add the column names to the dataframe
@@ -123,10 +129,11 @@ def get_ticker_types():
                 ]
                 # add the list to the dataframe as a row
                 ticker_type_data.loc[len(ticker_type_data)] = row
-        print(f"{ticker_type_data.shape[0]} ticker_types read from polygon.")
         return ticker_type_data
-    except exceptions.BadResponse as error:
-        print("Non-200 response from polygon API", error)
+    except exceptions.BadResponse as e:
+        logger.error(f"Non-200 response from polygon API, error: {e}")
+
+    logger.debug("Finished")
 
 
 def get_tickers():
@@ -135,21 +142,18 @@ def get_tickers():
     Returns a dataframe.
     docs
     https://polygon.io/docs/stocks/get_v3_reference_tickers
-    https://polygon-api-client.readthedocs.io/en/latest/Reference.html#list-tickers"""
-    print(get_tickers)
+    https://polygon-api-client.readthedocs.io/en/latest/Reference.html#list-tickers
+    """
+
+    logger.debug("Started")
+
     # client = RESTClient("XXXXXX") # hardcoded api_key is used
     key = os.environ["POLYGON"]
     try:
         client = RESTClient(api_key=key)  # POLYGON_API_KEY environment variable is used
-    except exceptions.AuthError as error:
-        print("Empty or invalid polygon API key", error)
+    except exceptions.AuthError as e:
+        logger.error(f"Empty or invalid polygon API key, error: {e}")
         return
-
-    # tickers = []
-    # for ticker in client.list_tickers(market="stocks", type="CS", active=True, limit=1000):
-    #     tickers.append(ticker)
-    # print(tickers)
-    # print(f"Ticker: {tickers[0]}")
 
     # create a list of columns names for the dataframe
     dataframe_columns = [
@@ -195,7 +199,6 @@ def get_tickers():
                 ]
                 # add the list to the dataframe as a row
                 ticker_data.loc[len(ticker_data)] = row
-        print(f"{ticker_data.shape[0]} tickers read from polygon.")
         ticker_data.loc[
             ticker_data.currency_name == "United States Dollar", "currency_name"
         ] = "US Dollar"
@@ -221,8 +224,10 @@ def get_tickers():
             subset=["primary_exchange", "ticker"], keep="last", inplace=True
         )
         return ticker_data
-    except exceptions.BadResponse as error:
-        print("Non-200 response from polygon API", error)
+    except exceptions.BadResponse as e:
+        logger.error(f"Non-200 response from polygon API, error: {e}")
+
+    logger.debug("Finished")
 
 
 def get_ohlcv(days=1):
@@ -236,13 +241,17 @@ def get_ohlcv(days=1):
     https://polygon.io/docs/stocks/get_v2_aggs_grouped_locale_us_market_stocks__date
     https://polygon-api-client.readthedocs.io/en/latest/Aggs.html#get-grouped-daily-aggs
     """
-    logging.info(f"days is {days}")
+
+    logger.debug("Started")
+
+    logger.debug(f"days is {days}")
+
     # client = RESTClient("XXXXXX") # hardcoded api_key is used
     key = os.environ["POLYGON"]
     try:
         client = RESTClient(api_key=key)  # POLYGON_API_KEY environment variable is used
-    except exceptions.AuthError as error:
-        print("Empty or invalid polygon API key", error)
+    except exceptions.AuthError as e:
+        logger.error(f"Empty or invalid polygon API key, error: {e}")
         return
 
     # create a list of columns names for the dataframe
@@ -265,15 +274,9 @@ def get_ohlcv(days=1):
     # now = dt.now(tz.utcoffset)
     now = date.today()
 
-    # end_date = f"{now.year}-{now.month}-{now.day}"
-    # print(end_date)
-
     ohlcv_date = now - relativedelta(days=days)
     ohlcv_string_date = ohlcv_date.strftime("%Y-%m-%d")
-    logging.info(f"ohlcv date is {ohlcv_date}.")
-    print(days)
-    print(ohlcv_date)
-    print(ohlcv_string_date)
+    logger.debug(f"ohlcv date is {ohlcv_date}.")
 
     try:
         # get the ohlcv from polygon
@@ -292,22 +295,20 @@ def get_ohlcv(days=1):
                     agg.transactions or 0,
                     agg.open,
                     agg.otc,
-                    dt.fromtimestamp(int(agg.timestamp) / 1000),
+                    dt.fromtimestamp(int(agg.timestamp) / 1000),  # type: ignore
                     agg.volume,
                     agg.vwap,
                     ohlcv_date,
                 ]
-                if row[0] == "EWCZ":
-                    print(row)
                 # add the list to the dataframe as a row
                 # ohlcv_data.loc[len(ohlcv_data)] = row
                 ohlcv_list.append(row)
         ohlcv_data = pd.DataFrame(ohlcv_list, columns=dataframe_columns)
-        # print(f"{ohlcv_data.shape}")
-        # print(f"{ohlcv_data.shape[0]} ohlcv rows read from polygon.")
         return ohlcv_data
-    except exceptions.BadResponse as error:
-        print("Non-200 response from polygon API", error)
+    except exceptions.BadResponse as e:
+        logger.error(f"Non-200 response from polygon API, error: {e}")
+
+    logger.debug("Finished")
 
 
 def get_ohlcv_by_date(ohlcv_date=dt.now(tz.utc)):
@@ -322,12 +323,14 @@ def get_ohlcv_by_date(ohlcv_date=dt.now(tz.utc)):
     https://polygon-api-client.readthedocs.io/en/latest/Aggs.html#get-grouped-daily-aggs
     """
 
+    logger.debug("Started")
+
     # client = RESTClient("XXXXXX") # hardcoded api_key is used
     key = os.environ["POLYGON"]
     try:
         client = RESTClient(api_key=key)  # POLYGON_API_KEY environment variable is used
-    except exceptions.AuthError as error:
-        print("Empty or invalid polygon API key", error)
+    except exceptions.AuthError as e:
+        logger.error(f"Empty or invalid polygon API key, error: {e}")
         return
 
     # create a list of columns names for the dataframe
@@ -349,7 +352,6 @@ def get_ohlcv_by_date(ohlcv_date=dt.now(tz.utc)):
     ohlcv_list = []
 
     ohlcv_string_date = ohlcv_date.strftime("%Y-%m-%d")
-    print(f"get_ohlcv_by_date date is {ohlcv_date}")
 
     try:
         # get the ohlcv from polygon
@@ -368,7 +370,7 @@ def get_ohlcv_by_date(ohlcv_date=dt.now(tz.utc)):
                     agg.transactions or 0,
                     agg.open,
                     agg.otc,
-                    dt.fromtimestamp(int(agg.timestamp) / 1000),
+                    dt.fromtimestamp(int(agg.timestamp) / 1000),  # type: ignore
                     agg.volume,
                     agg.vwap,
                     ohlcv_date,
@@ -376,10 +378,11 @@ def get_ohlcv_by_date(ohlcv_date=dt.now(tz.utc)):
                 # add the list to the dataframe as a row
                 ohlcv_list.append(row)
         ohlcv_data = pd.DataFrame(ohlcv_list, columns=dataframe_columns)
-        print(f"{ohlcv_data.shape[0]} ohlcv rows read from polygon.")
         return ohlcv_data
-    except exceptions.BadResponse as error:
-        print("Non-200 response from polygon API", error)
+    except exceptions.BadResponse as e:
+        logger.error(f"Non-200 response from polygon API, error: {e}")
+
+    logger.debug("Finished")
 
 
 def get_splits(days=28):
@@ -397,8 +400,8 @@ def get_splits(days=28):
     key = os.environ["POLYGON"]
     try:
         client = RESTClient(api_key=key)  # POLYGON_API_KEY environment variable is used
-    except exceptions.AuthError as error:
-        print("Empty or invalid polygon API key", error)
+    except exceptions.AuthError as e:
+        logger.error(f"Empty or invalid polygon API key, error: {e}")
         return
 
     # create a list of columns names for the dataframe
@@ -409,12 +412,8 @@ def get_splits(days=28):
 
     now = dt.now(tz.utc)
 
-    # end_date = f"{now.year}-{now.month}-{now.day}"
-    # print(end_date)
-
     execution_date = now - relativedelta(days=days)
     execution_date = execution_date.strftime("%Y-%m-%d")
-    print(execution_date)
 
     try:
         # get the splits from polygon
@@ -430,10 +429,11 @@ def get_splits(days=28):
                 ]
                 # add the list to the dataframe as a row
                 split_data.loc[len(split_data)] = row
-        print(f"{split_data.shape[0]} splits read from polygon.")
         return split_data
-    except exceptions.BadResponse as error:
-        print("Non-200 response from polygon API", error)
+    except exceptions.BadResponse as e:
+        logger.error(f"Non-200 response from polygon API, error: {e}")
+
+    logger.debug("Finished")
 
 
 def get_dividends(days=28):
@@ -452,8 +452,8 @@ def get_dividends(days=28):
     key = os.environ["POLYGON"]
     try:
         client = RESTClient(api_key=key)  # POLYGON_API_KEY environment variable is used
-    except exceptions.AuthError as error:
-        print("Empty or invalid polygon API key", error)
+    except exceptions.AuthError as e:
+        logger.error(f"Empty or invalid polygon API key, error: {e}")
         return
 
     # create a list of columns names for the dataframe
@@ -474,12 +474,8 @@ def get_dividends(days=28):
 
     now = dt.now(tz.utc)
 
-    # end_date = f"{now.year}-{now.month}-{now.day}"
-    # print(end_date)
-
     record_date = now - relativedelta(days=days)
     record_date = record_date.strftime("%Y-%m-%d")
-    print(record_date)
 
     try:
         # get the dividends from polygon
@@ -500,12 +496,8 @@ def get_dividends(days=28):
                 ]
                 # add the list to the dataframe as a row
                 dividend_data.loc[len(dividend_data)] = row
-        print(f"{dividend_data.shape[0]} dividends read from polygon.")
         return dividend_data
-    except exceptions.BadResponse as error:
-        print("Non-200 response from polygon API", error)
+    except exceptions.BadResponse as e:
+        logger.error(f"Non-200 response from polygon API, error: {e}")
 
-
-if __name__ == "__main__":
-    load_dotenv()
-    get_splits()
+    logger.debug("Finished")

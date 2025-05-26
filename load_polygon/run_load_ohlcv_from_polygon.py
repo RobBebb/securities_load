@@ -1,9 +1,16 @@
+"""
+Date: 16/10/2023
+Author: Rob Bebbington
+
+Get the ohlcv data from polygon and load it into my polygon schema
+"""
+
 import logging
 
 from dotenv import load_dotenv
 
-from securities_load.securities.load_option_data_from_yahoo import (
-    load_option_data_from_yahoo,
+from securities_load.load_polygon.polygon_load_ohlcv import (
+    load_ohlcvs,
 )
 
 load_dotenv()
@@ -12,7 +19,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(
-    filename="load_option_data_from_yahoo.log",
+    filename="polygon_load_ohlcvs.log",
     filemode="w",
     encoding="utf-8",
     level=logging.INFO,
@@ -22,6 +29,6 @@ logging.basicConfig(
 
 logger.info("Start")
 
-load_option_data_from_yahoo()
+load_ohlcvs(days=5)
 
 logger.info("Finish")

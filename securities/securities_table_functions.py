@@ -3,10 +3,7 @@ import logging
 import pandas as pd
 import psycopg2
 import psycopg2.extras
-from sqlalchemy import Engine, create_engine, text
-from sqlalchemy.exc import NoResultFound
-
-from securities_load.securities.postgresql_database_functions import sqlalchemy_engine
+from sqlalchemy import Engine, text
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +26,7 @@ def retrieve_ohlcv_from_to(
     # print(f"Exchange_code is: {exchange_code}")
     exchange_id = get_exchange_id(engine, exchange_code)
     print(f"Exchange_id is: {exchange_id}")
-    if exchange_id == None:
+    if exchange_id is None:
         raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
 
     tables = """securities.ticker AS t
@@ -81,7 +78,7 @@ def retrieve_ohlcv_last_n_days(
     """
 
     exchange_id = get_exchange_id(engine, exchange_code)
-    if exchange_id == None:
+    if exchange_id is None:
         raise KeyError(f"No exchange id found for exchange code {exchange_code}!")
 
     tables = """securities.ticker AS t
@@ -353,7 +350,7 @@ def get_ticker_id_using_yahoo_ticker(engine: Engine, yahoo_ticker: str) -> int |
         return result[0] if result is not None else result
 
 
-def get_tickers_using_exchange_code(engine: Engine, exchange_code: str) -> list:
+def get_tickers_using_exchange_code(engine: Engine, exchange_code: str) -> list | None:
     """
     Read the ticker table and return ticker_id
     Parameters:
@@ -479,7 +476,6 @@ def get_gics_sector_id_from_name(engine: Engine, sector_name: str) -> int | None
         str: The id of the sector
     """
     table = "securities.gics_sector"
-    id = 0
 
     # create a list of columns to get from the table
     table_columns = "id"
@@ -733,7 +729,6 @@ def retrieve_ticker_ids_for_watchlist_code(engine: Engine, code: str) -> list | 
 
     # Get the watchlist.id for the watchlist.code
     watchlist_id = get_watchlist_id_from_code(engine, code)
-    print("watchlist_id", watchlist_id)
 
     # Get all the ticker_ids in the watchlist_ticker table the watchlist.id
 
