@@ -9,7 +9,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(
-    filename="load_asx_ohlcv_from_yahoo.log",
+    filename="load_ohlcv_from_yahoo.log",
     filemode="w",
     encoding="utf-8",
     level=logging.INFO,
