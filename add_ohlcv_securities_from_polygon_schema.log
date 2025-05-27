@@ -1,4 +1,4 @@
-2025-05-26 15:33:01,919 - __main__.<module> - INFO - Start
-2025-05-26 15:33:01,938 - securities_load.load_polygon.polygon_to_securities_table_functions.add_ohlcvs - DEBUG - Started
-2025-05-26 15:33:07,275 - securities_load.load_polygon.polygon_to_securities_table_functions.add_ohlcvs - INFO - Insert to table securities.ohlcv successful.
-2025-05-26 15:33:07,275 - __main__.<module> - INFO - Finish
+2025-05-28 08:35:02,200 - __main__.<module> - INFO - Start
+2025-05-28 08:35:02,206 - securities_load.load_polygon.polygon_to_securities_table_functions.add_ohlcvs - DEBUG - Started
+2025-05-28 08:35:05,086 - securities_load.load_polygon.polygon_to_securities_table_functions.add_ohlcvs - INFO - Insert to table securities.ohlcv successful.
+2025-05-28 08:35:05,086 - __main__.<module> - INFO - Finish
