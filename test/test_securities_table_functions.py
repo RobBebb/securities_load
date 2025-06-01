@@ -52,7 +52,7 @@ def test_get_ticker_type_id_successful(engine):
 
 
 def test_get_ticker_type_id_not_found(engine):
-    assert get_ticker_type_id(engine, "aaa") == None
+    assert get_ticker_type_id(engine, "aaa") is None
 
 
 def test_get_exchange_id_successful(engine):
@@ -60,7 +60,7 @@ def test_get_exchange_id_successful(engine):
 
 
 def test_get_exchange_id_not_found(engine):
-    assert get_exchange_id(engine, "ASX") == None
+    assert get_exchange_id(engine, "ASX") is None
 
 
 def test_get_exchange_code_successful(engine):
@@ -68,7 +68,7 @@ def test_get_exchange_code_successful(engine):
 
 
 def test_get_exchange_code_not_found(engine):
-    assert get_exchange_code(engine, 999) == None
+    assert get_exchange_code(engine, 999) is None
 
 
 def test_get_exchange_id_by_acronym_successful(engine):
@@ -80,7 +80,7 @@ def test_get_exchange_id_by_acronym_successful_duplicate(engine):
 
 
 def test_get_exchange_id_by_acronym_not_found(engine):
-    assert get_exchange_id_by_acronym(engine, "XASX") == None
+    assert get_exchange_id_by_acronym(engine, "XASX") is None
 
 
 def test_get_currency_code_successful(engine):
@@ -88,7 +88,7 @@ def test_get_currency_code_successful(engine):
 
 
 def test_get_currency_code_not_found(engine):
-    assert get_currency_code(engine, "Australian Rand") == None
+    assert get_currency_code(engine, "Australian Rand") is None
 
 
 def test_get_ticker_using_id_successful(engine):
@@ -104,7 +104,7 @@ def test_get_ticker_id_successful(engine):
 
 
 def test_get_ticker_id_not_found(engine):
-    assert get_ticker_id(engine, "XXXX", "AA") == None
+    assert get_ticker_id(engine, "XXXX", "AA") is None
 
 
 def test_get_gics_sector_code_successful(engine):
@@ -112,7 +112,7 @@ def test_get_gics_sector_code_successful(engine):
 
 
 def test_get_gics_sector_code_not_found(engine):
-    assert get_gics_sector_code(engine, "Tech") == None
+    assert get_gics_sector_code(engine, "Tech") is None
 
 
 def test_get_gics_industry_group_code_successful(engine):
@@ -120,7 +120,7 @@ def test_get_gics_industry_group_code_successful(engine):
 
 
 def test_get_gics_industry_group_code_not_found(engine):
-    assert get_gics_industry_group_code(engine, "Consumer") == None
+    assert get_gics_industry_group_code(engine, "Consumer") is None
 
 
 def test_get_gics_industry_code_successful(engine):
@@ -128,7 +128,7 @@ def test_get_gics_industry_code_successful(engine):
 
 
 def test_get_gics_industry_code_not_found(engine):
-    assert get_gics_industry_code(engine, "Technology") == None
+    assert get_gics_industry_code(engine, "Technology") is None
 
 
 def test_get_gics_sub_industry_code_successful(engine):
@@ -136,7 +136,7 @@ def test_get_gics_sub_industry_code_successful(engine):
 
 
 def test_get_gics_sub_industry_code_not_found(engine):
-    assert get_gics_sub_industry_code(engine, "Apparel") == None
+    assert get_gics_sub_industry_code(engine, "Apparel") is None
 
 
 def test_get_gics_sector_id_from_name_successful(engine):
@@ -144,7 +144,7 @@ def test_get_gics_sector_id_from_name_successful(engine):
 
 
 def test_get_gics_sector_id_from_name_not_found(engine):
-    assert get_gics_sector_id_from_name(engine, "Consumer") == None
+    assert get_gics_sector_id_from_name(engine, "Consumer") is None
 
 
 def test_get_gics_industry_group_id_from_name_successful(engine):
@@ -152,7 +152,7 @@ def test_get_gics_industry_group_id_from_name_successful(engine):
 
 
 def test_get_gics_industry_group_id_from_name_not_found(engine):
-    assert get_gics_industry_group_id_from_name(engine, "Consumer") == None
+    assert get_gics_industry_group_id_from_name(engine, "Consumer") is None
 
 
 def test_get_gics_industry_id_from_name_successful(engine):
@@ -160,7 +160,7 @@ def test_get_gics_industry_id_from_name_successful(engine):
 
 
 def test_get_gics_industry_id_from_name_not_found(engine):
-    assert get_gics_industry_id_from_name(engine, "Consumer") == None
+    assert get_gics_industry_id_from_name(engine, "Consumer") is None
 
 
 def test_get_gics_sub_industry_id_from_name_successful(engine):
@@ -168,7 +168,7 @@ def test_get_gics_sub_industry_id_from_name_successful(engine):
 
 
 def test_get_gics_sub_industry_id_from_name_not_found(engine):
-    assert get_gics_sub_industry_id_from_name(engine, "Consumer") == None
+    assert get_gics_sub_industry_id_from_name(engine, "Consumer") is None
 
 
 def test_get_gics_sector_id_from_industry_group_id_successful(engine):
@@ -176,7 +176,7 @@ def test_get_gics_sector_id_from_industry_group_id_successful(engine):
 
 
 def test_get_gics_sector_id_from_industry_group_id_not_found(engine):
-    assert get_gics_sector_id_from_industry_group_id(engine, 99) == None
+    assert get_gics_sector_id_from_industry_group_id(engine, 99) is None
 
 
 def test_get_watchlist_id_from_code_successful(engine):
@@ -184,7 +184,7 @@ def test_get_watchlist_id_from_code_successful(engine):
 
 
 def test_get_watchlist_id_from_code_not_found(engine):
-    assert get_watchlist_id_from_code(engine, "AUS") == None
+    assert get_watchlist_id_from_code(engine, "AUS") is None
 
 
 def test_get_tickers_using_exchange_code_successful(engine):
@@ -203,16 +203,20 @@ def test_retrieve_ohlcv_last_n_days_not_found(engine):
     assert len(retrieve_ohlcv_last_n_days(engine, "XNAS", "XXXX", 5)) == 0
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 def test_retrieve_ohlcv_from_to_successful(engine):
     assert (
-        len(retrieve_ohlcv_from_to("XNAS", "GOOGL", "2024-09-01", "2024-09-30")) == 20
+        len(retrieve_ohlcv_from_to(engine, "XNAS", "GOOGL", "2024-09-01", "2024-09-30"))
+        == 20
     )
 
 
-@pytest.mark.xfail
+# @pytest.mark.xfail
 def test_retrieve_ohlcv_from_to_not_found(engine):
-    assert len(retrieve_ohlcv_from_to("XNAS", "XXXX", "2026-01-01", "2026-01-25")) == 0
+    assert (
+        len(retrieve_ohlcv_from_to(engine, "XNAS", "XXXX", "2026-01-01", "2026-01-25"))
+        == 0
+    )
 
 
 # pytest markers

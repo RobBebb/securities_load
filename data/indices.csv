@@ -47,8 +47,6 @@ S&P ASX All Technology,XTX,XTX,^AXTX,AUS,AUD,index,primary sectors
 S&P ASX Buy Write,XBW,XBW,,AUS,AUD,index,other
 S&P ASX Dividend Opportunities,XDI,XDI,^AXDI,AUS,AUD,index,other
 S&P ASX Emerging Companies,XEC,XEC,^AXEC,AUS,AUD,index,other
-S&P ASX Franked Dividend,XFD,XFD,,AUS,AUD,index,other
-S&P ASX Franked Dividend Index Total Return,XFT,XFT,,AUS,AUD,index,other
 S&P ASX Small Ordinaries,AXSO,XSO,^AXSO,AUS,AUD,index,additional
 S&P ASX 200 A REIT Equal Weight,XAE,XAE,^AXAE,AUS,AUD,index,other
 Vaneck Franked Div Ein,YFDI,YFDI,,AUS,AUD,index,other

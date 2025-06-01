@@ -73,7 +73,6 @@ def sqlalchemy_connect():
     database = os.environ["DB_NAME"]
 
     conn_string = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
-    print(conn_string)
     engine = create_engine(conn_string)
     connection = engine.connect()
     return connection
@@ -113,9 +112,30 @@ def sqlalchemy_engine() -> Engine:
     database = os.environ["DB_NAME"]
 
     conn_string = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
-    print(conn_string)
     engine = create_engine(conn_string)
     return engine
+
+
+def get_uri() -> str:
+    """
+    Get the database URI
+    user = securities
+    password = securities
+    host = localhost
+    port = 5432
+    database = securities
+    """
+    load_dotenv()
+
+    dbms = "postgresql"
+    user = os.environ["DB_USER"]
+    password = os.environ["DB_PASS"]
+    host = os.environ["DB_HOST"]
+    port = os.environ["DB_PORT"]
+    database = os.environ["DB_NAME"]
+
+    uri = f"{dbms}://{user}:{password}@{host}:{port}/{database}"
+    return uri
 
 
 if __name__ == "__main__":
