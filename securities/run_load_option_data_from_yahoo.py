@@ -8,7 +8,6 @@ from securities_load.securities.load_option_data_from_yahoo import (
 
 load_dotenv()
 
-
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(

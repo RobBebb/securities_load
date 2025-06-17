@@ -28,8 +28,8 @@ def transform_watchlist_tickers(
     watchlist_tickers["watchlist_id"] = watchlist_tickers["watchlist_name"].apply(
         lambda x: get_watchlist_id_from_code(engine, x)
     )
-    print(watchlist_tickers.head())
-    print(f"Data types: {watchlist_tickers.dtypes}")
+    # print(watchlist_tickers.head())
+    # print(f"Data types: {watchlist_tickers.dtypes}")
     # watchlist_tickers["ticker_id"] = watchlist_tickers[
     #     ["exchange_code", "ticker"]
     # ].apply(lambda x: get_ticker_id(engine, *x), axis=1)
@@ -45,6 +45,7 @@ def transform_watchlist_tickers(
     )
     watchlist_tickers["watchlist_id"] = watchlist_tickers["watchlist_id"].astype(float)
     watchlist_tickers["ticker_id"] = watchlist_tickers["ticker_id"].astype(float)
-    print(watchlist_tickers.head())
-    print(watchlist_tickers.tail())
+    watchlist_tickers.dropna()
+    # print(watchlist_tickers.head())
+    # print(watchlist_tickers.tail())
     return watchlist_tickers

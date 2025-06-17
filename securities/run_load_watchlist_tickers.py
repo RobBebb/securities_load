@@ -1,8 +1,3 @@
-from securities_load.securities.load_watchlist_tickers import load_watchlist_tickers
-
-load_watchlist_tickers("/home/ubuntuuser/karra/securities_load/data/watchlists.csv")
-
-
 import logging
 
 from dotenv import load_dotenv
@@ -11,14 +6,13 @@ from securities_load.securities.load_watchlist_tickers import load_watchlist_tic
 
 load_dotenv()
 
-
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(
     filename="load_watchlist_tickers.log",
     filemode="w",
     encoding="utf-8",
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="{asctime} - {name}.{funcName} - {levelname} - {message}",
     style="{",
 )

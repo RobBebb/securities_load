@@ -145,10 +145,13 @@ def load_option_data_from_yahoo() -> None:
                 call_data_df["in_the_money"] = call_data_df["in_the_money"].replace(
                     {False: "F"}
                 )
+                call_data_df["bid"] = call_data_df["bid"].fillna(0)
+                call_data_df["ask"] = call_data_df["ask"].fillna(0)
                 call_data_df["volume"] = call_data_df["volume"].fillna(0)
                 call_data_df["percent_change"] = call_data_df["percent_change"].fillna(
                     0
                 )
+                call_data_df["open_interest"] = call_data_df["open_interest"].fillna(0)
                 call_data_df.set_index("option_symbol", inplace=True)
                 # Loop through the call data getting the ticker_id for the tickers added above
                 for index, row in call_data_df.iterrows():
@@ -222,8 +225,12 @@ def load_option_data_from_yahoo() -> None:
                 put_data_df["in_the_money"] = put_data_df["in_the_money"].replace(
                     {False: "F"}
                 )
+                put_data_df["bid"] = put_data_df["bid"].fillna(0)
+                put_data_df["ask"] = put_data_df["ask"].fillna(0)
                 put_data_df["volume"] = put_data_df["volume"].fillna(0)
                 put_data_df["percent_change"] = put_data_df["percent_change"].fillna(0)
+                put_data_df["open_interest"] = put_data_df["open_interest"].fillna(0)
+
                 put_data_df.set_index("option_symbol", inplace=True)
                 # print("Adding put_data_df")
                 # print("put_data_df", put_data_df.head(100))

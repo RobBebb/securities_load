@@ -1,5 +1,4 @@
 import logging
-import re
 
 import polars as pl
 
@@ -665,6 +664,173 @@ def retrieve_yahoo_tickers_using_exchange_code(
     return yahoo_tickers
 
 
+def retrieve_close_using_currency_tickers_dates(
+    currency_code: str, tickers: list[str], start_date: str, end_date: str
+) -> pl.DataFrame:
+    """
+    Retrieve close data for a given currency and list of tickers between specified start and end dates.
+    This data is returned in a polars dataframe in long format with columns: date, ticker, close.
+    """
+
+    logger.debug("Started")
+
+    # Convert the list into a string for the SQL query. Single quotes must be used for SQL.
+    tickers_string = "'" + "', '".join(tickers) + "'"
+
+    query = f"""
+        SELECT o.date, t.ticker, o.close
+        FROM securities.ticker AS t
+        INNER JOIN securities.ohlcv AS o 
+        ON t.id = o.ticker_id
+        WHERE t.currency_code = '{currency_code}' AND t.ticker IN ({tickers_string})
+        AND date >= '{start_date}'
+        AND date <= '{end_date}'
+        ORDER BY t.ticker, o.date
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No close data found for tickers: {tickers} between {start_date} and {end_date}"
+        )
+
+    logger.debug(f"Finished - Retrieved {len(pl_df)} rows")
+
+    return pl_df
+
+
+def get_ticker_ids_using_currency_code_and_tickers(
+    currency_code: str, tickers: list[str]
+) -> list[int]:
+    """
+    Get the ticker IDs for a given currency code and list of tickers.
+    """
+
+    logger.debug("Started")
+
+    tickers_string = "'" + "', '".join(tickers) + "'"
+
+    query = f"""
+        SELECT t.id
+        FROM securities.ticker AS t
+        WHERE t.currency_code = '{currency_code}' AND t.ticker IN ({tickers_string})
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No ticker found for currency code: {currency_code} and tickers: {tickers}"
+        )
+
+    # Convert to a seriesand change to a list
+    ids = pl_df["id"].to_list()
+
+    logger.debug(f"Finished - ids = {ids}")
+
+    return ids
+
+def retrieve_watchlists_using_watchlist_type(watchlist_type: str) -> list[tuple[int, str, str]]:
+    """
+    Retrieves the watchlists of the specified watchlist type.
+    """
+
+    logger.debug("Started")
+
+    query = f"""
+        SELECT w.id, w.code, w.description
+        FROM securities.watchlist w
+        INNER JOIN securities.watchlist_type wt ON w.watchlist_type_id = wt.id
+        WHERE wt.code = '{watchlist_type}'
+        ORDER BY w.code
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(f"No watchlists found for watchlist type: {watchlist_type}")
+
+    watchlists = []
+
+    for row in pl_df.iter_rows(named=True):
+        watchlist_id = row["id"]
+        watchlist_code = row["code"]
+        watchlist_description = row["description"]
+
+        if not isinstance(watchlist_id, int):
+            raise TypeError(f"Expected watchlist_id to be an int, got {type(watchlist_id)}")
+        if not isinstance(watchlist_code, str):
+            raise TypeError(f"Expected watchlist_code to be a str, got {type(watchlist_code)}")
+        if not isinstance(watchlist_description, str):
+            raise TypeError(f"Expected watchlist_description to be a str, got {type(watchlist_description)}")
+
+
+        watchlists.append((watchlist_id, watchlist_code, watchlist_description))
+
+    logger.debug(f"Finished - Retrieved {len(watchlists)} rows")
+
+    return watchlists
+
+def retrieve_tickers_using_watchlist_code(watchlist_code: str) -> list[tuple[int, str, str]]:
+    """
+    Retrieves the tickers of the specified watchlist.
+    """
+
+    logger.debug("Started")
+
+    query = f"""
+        SELECT t.id, t.ticker, t.name
+        FROM securities.ticker t
+        INNER JOIN securities.watchlist_ticker wt ON wt.ticker_id = t.id
+        INNER JOIN securities.watchlist w ON w.id = wt.watchlist_id
+        WHERE w.code = '{watchlist_code}'
+        ORDER BY t.ticker
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(f"No tickers found for watchlist type: {watchlist_code}")
+
+    tickers = []
+
+    for row in pl_df.iter_rows(named=True):
+        ticker_id = row["id"]
+        ticker = row["ticker"]
+        ticker_name = row["name"]
+
+        if not isinstance(ticker_id, int):
+            raise TypeError(f"Expected ticker_id to be an int, got {type(ticker_id)}")
+        if not isinstance(ticker, str):
+            raise TypeError(f"Expected ticker to be a str, got {type(ticker)}")
+        if not isinstance(ticker_name, str):
+            raise TypeError(f"Expected ticker_name to be a str, got {type(ticker_name)}")
+
+
+        tickers.append((ticker_id, ticker, ticker_name))
+
+    logger.debug(f"Finished - Retrieved {len(tickers)} rows")
+
+    return tickers
+
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
@@ -699,6 +865,11 @@ if __name__ == "__main__":
     # result = get_gics_sector_id_using_industry_group_id(10)
     # result = retrieve_ohlcv_using_dates("XNAS", "AAPL", "2023-01-01", "2023-10-01")
     # result = retrieve_ohlcv_using_last_n_days("XNAS", "AAPL", 30)
-    result = retrieve_yahoo_tickers_using_exchange_code("XASX")
+    # result = retrieve_yahoo_tickers_using_exchange_code("XASX")
+    # result = retrieve_close_using_currency_tickers_dates(
+    #     "USD", ["AAPL", "MSFT", "GOOGL"], "2023-01-01", "2023-10-01"
+    # )
+    # result = retrieve_watchlists_using_watchlist_type("Dashboard")
+    result = retrieve_tickers_using_watchlist_code('US Overview')
     logger.info(f"Finished - result = {result}")
     print(f"Finished - result = {result}")

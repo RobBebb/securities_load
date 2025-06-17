@@ -1,5 +1,7 @@
 import logging
 
+import pandas as pd
+
 from securities_load.securities.postgresql_database_functions import (
     connect,
     sqlalchemy_engine,
@@ -33,6 +35,9 @@ def load_watchlist_tickers(watchlist_csv_file: str) -> None:
         engine, watchlist_tickers
     )
 
+    watchlist_tickers_transformed.to_csv(
+        "watchlist_tickers_transformed.csv", index=False
+    )
     logger.debug("Transformed")
 
     if watchlist_tickers_transformed is not None:

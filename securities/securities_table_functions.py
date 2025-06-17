@@ -640,20 +640,20 @@ def add_or_update_watchlist_tickers(conn, watchlist_ticker_list: pd.DataFrame) -
     print(f"Watchlist ticker list shape is: {watchlist_ticker_list.shape}")
     # create a list of columns from the dataframe
     table_columns = list(watchlist_ticker_list.columns)
-    # print(f"Table columns are: {table_columns}")
+    print(f"Table columns are: {table_columns}")
     columns = ",".join(table_columns)
-    # print(f"Columns are: {columns}")
+    print(f"Columns are: {columns}")
     # create VALUES('%s', '%s',...) one '%s' per column
     values = ", ".join(["%s" for _ in table_columns])
     print(f"Values are: {values}")
     # column names to use for update when there is a conflict
     conflict_columns = ", ".join(["EXCLUDED." + column for column in table_columns])
-    # print(f"Conflict columns are: {conflict_columns}")
+    print(f"Conflict columns are: {conflict_columns}")
     # create INSERT INTO table (columns) VALUES('%s',...)
     insert_stmt = f"INSERT INTO {table} ({columns}) VALUES ({values}) ON CONFLICT (watchlist_id, ticker_id) DO UPDATE SET ({columns}, last_updated_date) = ({conflict_columns}, CURRENT_TIMESTAMP)"
-    # print(f"Insert statement is: {insert_stmt}")
-    # print(f"Watchlist ticker list is: {watchlist_ticker_list}")
-    # print(f"Watchlist ticker list values are: {watchlist_ticker_list.values}")
+    print(f"Insert statement is: {insert_stmt}")
+    print(f"Watchlist ticker list is: {watchlist_ticker_list}")
+    print(f"Watchlist ticker list values are: {watchlist_ticker_list.values}")
     try:
         cur = conn.cursor()
         # add the rows from the dataframe to the table
@@ -725,7 +725,7 @@ def retrieve_ticker_ids_for_watchlist_code(engine: Engine, code: str) -> list | 
         engine - database connection
         watchlist_code - name of the watchlist
     """
-    logger.debug("Started")
+    logger.info("Started")
 
     # Get the watchlist.id for the watchlist.code
     watchlist_id = get_watchlist_id_from_code(engine, code)
@@ -751,6 +751,8 @@ def retrieve_ticker_ids_for_watchlist_code(engine: Engine, code: str) -> list | 
         for row in tickers:
             ticker_id = row[0]
             ticker_ids.append(ticker_id)
+
+    logger.info(f"Tickers retrieved is {len(tickers)}")
 
     return ticker_ids
 
@@ -816,6 +818,7 @@ def add_or_update_option_data(conn, option_data: pd.DataFrame) -> None:
         logger.info(f"{option_data.shape[0]} rows added to {table} table.")
     except (Exception, psycopg2.Error) as error:
         logger.exception(error)
+        logger.debug(f"option_data: {option_data}")
     finally:
         if conn:
             cur.close()

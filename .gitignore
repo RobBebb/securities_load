@@ -37,3 +37,5 @@ test/polars_practice.py
 .gitignore
 securities/__pycache__/postgresql_database_functions.cpython-311.pyc
 .gitignore
+load_watchlist_tickers.log
+watchlist_tickers_transformed.csv
