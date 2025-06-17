@@ -739,7 +739,10 @@ def get_ticker_ids_using_currency_code_and_tickers(
 
     return ids
 
-def retrieve_watchlists_using_watchlist_type(watchlist_type: str) -> list[tuple[int, str, str]]:
+
+def retrieve_watchlists_using_watchlist_type(
+    watchlist_type: str,
+) -> list[tuple[int, str, str]]:
     """
     Retrieves the watchlists of the specified watchlist type.
     """
@@ -771,12 +774,17 @@ def retrieve_watchlists_using_watchlist_type(watchlist_type: str) -> list[tuple[
         watchlist_description = row["description"]
 
         if not isinstance(watchlist_id, int):
-            raise TypeError(f"Expected watchlist_id to be an int, got {type(watchlist_id)}")
+            raise TypeError(
+                f"Expected watchlist_id to be an int, got {type(watchlist_id)}"
+            )
         if not isinstance(watchlist_code, str):
-            raise TypeError(f"Expected watchlist_code to be a str, got {type(watchlist_code)}")
+            raise TypeError(
+                f"Expected watchlist_code to be a str, got {type(watchlist_code)}"
+            )
         if not isinstance(watchlist_description, str):
-            raise TypeError(f"Expected watchlist_description to be a str, got {type(watchlist_description)}")
-
+            raise TypeError(
+                f"Expected watchlist_description to be a str, got {type(watchlist_description)}"
+            )
 
         watchlists.append((watchlist_id, watchlist_code, watchlist_description))
 
@@ -784,7 +792,10 @@ def retrieve_watchlists_using_watchlist_type(watchlist_type: str) -> list[tuple[
 
     return watchlists
 
-def retrieve_tickers_using_watchlist_code(watchlist_code: str) -> list[tuple[int, str, str]]:
+
+def retrieve_tickers_using_watchlist_code(
+    watchlist_code: str,
+) -> list[tuple[int, str, str]]:
     """
     Retrieves the tickers of the specified watchlist.
     """
@@ -821,14 +832,44 @@ def retrieve_tickers_using_watchlist_code(watchlist_code: str) -> list[tuple[int
         if not isinstance(ticker, str):
             raise TypeError(f"Expected ticker to be a str, got {type(ticker)}")
         if not isinstance(ticker_name, str):
-            raise TypeError(f"Expected ticker_name to be a str, got {type(ticker_name)}")
-
+            raise TypeError(
+                f"Expected ticker_name to be a str, got {type(ticker_name)}"
+            )
 
         tickers.append((ticker_id, ticker, ticker_name))
 
     logger.debug(f"Finished - Retrieved {len(tickers)} rows")
 
     return tickers
+
+
+def retrieve_unique_country_alpha_3_from_exchanges() -> pl.DataFrame:
+    """
+    Input: None
+    Output: list[str]
+    This is simply a polars df of unique values in the one column country_alpha_3.
+    """
+
+    logger.debug("Started")
+
+    query = """
+        SELECT distinct country_alpha_3
+        FROM securities.exchange
+        ORDER BY 1
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(f"No watchlists found for watchlist type: {watchlist_type}")
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape}")
+
+    return pl_df
 
 
 if __name__ == "__main__":
@@ -870,6 +911,7 @@ if __name__ == "__main__":
     #     "USD", ["AAPL", "MSFT", "GOOGL"], "2023-01-01", "2023-10-01"
     # )
     # result = retrieve_watchlists_using_watchlist_type("Dashboard")
-    result = retrieve_tickers_using_watchlist_code('US Overview')
+    # result = retrieve_tickers_using_watchlist_code('US Overview')
+    result = retrieve_unique_country_alpha_3_from_exchanges()
     logger.info(f"Finished - result = {result}")
     print(f"Finished - result = {result}")
