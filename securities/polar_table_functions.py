@@ -865,7 +865,7 @@ def retrieve_unique_country_alpha_3_from_exchanges() -> pl.DataFrame:
         raise e
 
     if pl_df.is_empty():
-        raise ValueError(f"No watchlists found for watchlist type: {watchlist_type}")
+        raise ValueError("No country_alpha_3 found.")
 
     logger.debug(f"Finished - Retrieved {pl_df.shape}")
 
