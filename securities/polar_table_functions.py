@@ -872,6 +872,38 @@ def retrieve_unique_country_alpha_3_from_exchanges() -> pl.DataFrame:
     return pl_df
 
 
+def retrieve_exchange_id_using_country_alpha_3(
+    country_alpha_3: str,
+) -> pl.DataFrame:
+    """
+    Input: country_alpha_3: str
+    Output: pl.DataFrame
+    Use the country_alpha_3 value passed in to get a polars df containing id, code and acronym.
+    """
+
+    logger.debug("Started")
+
+    query = f"""
+        SELECT id, code, acronym
+        FROM securities.exchange
+        WHERE country_alpha_3 = '{country_alpha_3}'
+        ORDER BY acronym
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(f"No tickers found for country_alpha_3: {country_alpha_3}")
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape}")
+
+    return pl_df
+
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
@@ -912,6 +944,7 @@ if __name__ == "__main__":
     # )
     # result = retrieve_watchlists_using_watchlist_type("Dashboard")
     # result = retrieve_tickers_using_watchlist_code('US Overview')
-    result = retrieve_unique_country_alpha_3_from_exchanges()
+    # result = retrieve_unique_country_alpha_3_from_exchanges()
+    result = retrieve_exchange_id_using_country_alpha_3("USA")
     logger.info(f"Finished - result = {result}")
     print(f"Finished - result = {result}")
