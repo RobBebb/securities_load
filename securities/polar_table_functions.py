@@ -846,7 +846,7 @@ def retrieve_tickers_using_watchlist_code(
 def retrieve_unique_country_alpha_3_from_exchanges() -> pl.DataFrame:
     """
     Input: None
-    Output: list[str]
+    Output: pl.DataFrame
     This is simply a polars df of unique values in the one column country_alpha_3.
     """
 
@@ -904,6 +904,35 @@ def retrieve_exchange_id_using_country_alpha_3(
     return pl_df
 
 
+def retrieve_ticker_types() -> pl.DataFrame:
+    """
+    Input: None
+    Output: pl.DataFrame
+    This is simply a polars df of ticker_type ids and codes.
+    """
+
+    logger.debug("Started")
+
+    query = """
+        SELECT id, code
+        FROM securities.ticker_type
+        ORDER BY code
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError("No ticker_types found.")
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape}")
+
+    return pl_df
+
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
@@ -945,6 +974,7 @@ if __name__ == "__main__":
     # result = retrieve_watchlists_using_watchlist_type("Dashboard")
     # result = retrieve_tickers_using_watchlist_code('US Overview')
     # result = retrieve_unique_country_alpha_3_from_exchanges()
-    result = retrieve_exchange_id_using_country_alpha_3("USA")
+    # result = retrieve_exchange_id_using_country_alpha_3("USA")
+    result = retrieve_ticker_types()
     logger.info(f"Finished - result = {result}")
     print(f"Finished - result = {result}")
