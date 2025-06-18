@@ -933,6 +933,43 @@ def retrieve_ticker_types() -> pl.DataFrame:
     return pl_df
 
 
+def retrieve_tickers_using_exchanges_and_ticker_types(
+    exchange_ids: list[int], ticker_type_id: int
+) -> pl.DataFrame:
+    """
+    Input: exchange_ids: list[int], ticker_type_id: int
+    Output: pl.DataFrame
+    Use the exchange_ids and ticker_type_id passed in get a polars df containing id, ticker, name and exchange_id.
+    """
+
+    logger.debug("Started")
+
+    exchanges = ", ".join(map(str, exchange_ids))
+
+    query = f"""
+        SELECT id, ticker, name
+        FROM securities.ticker
+        WHERE exchange_id IN ({exchanges})
+        AND ticker_type_id = {ticker_type_id}
+        ORDER BY ticker
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No tickers found for exchanges: {exchanges} and ticker type: {ticker_type_id}"
+        )
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape}")
+
+    return pl_df
+
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
@@ -976,5 +1013,6 @@ if __name__ == "__main__":
     # result = retrieve_unique_country_alpha_3_from_exchanges()
     # result = retrieve_exchange_id_using_country_alpha_3("USA")
     result = retrieve_ticker_types()
+    result = retrieve_tickers_using_exchanges_and_ticker_types([2, 3, 6], 5)
     logger.info(f"Finished - result = {result}")
     print(f"Finished - result = {result}")
