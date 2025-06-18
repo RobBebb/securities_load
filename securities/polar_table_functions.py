@@ -970,6 +970,46 @@ def retrieve_tickers_using_exchanges_and_ticker_types(
     return pl_df
 
 
+def retrieve_ohlcv_using_ticker_id_and_dates(
+    ticker_id: int, start_date: str, end_date: str
+) -> pl.DataFrame:
+    """
+    Input: ticker_id: int, start: str, end: str
+    Output: pl.DataFrame
+    Use the ticker_id, start and end value passed in to get a polars df containing ohlcv data.
+    """
+
+    logger.debug("Started")
+
+    query = f"""
+        SELECT date,
+        open AS Open,
+        high AS High,
+        low AS Low,
+        close AS Close,
+        volume AS Volume
+        FROM securities.ohlcv o
+        WHERE ticker_id = {ticker_id}
+        AND date >= '{start_date}'
+        AND date <= '{end_date}'
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No OHLCV data found for ticker_id: {ticker_id} between {start_date} and {end_date}"
+        )
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape} rows")
+
+    return pl_df
+
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
@@ -1012,7 +1052,8 @@ if __name__ == "__main__":
     # result = retrieve_tickers_using_watchlist_code('US Overview')
     # result = retrieve_unique_country_alpha_3_from_exchanges()
     # result = retrieve_exchange_id_using_country_alpha_3("USA")
-    result = retrieve_ticker_types()
-    result = retrieve_tickers_using_exchanges_and_ticker_types([2, 3, 6], 5)
+    # result = retrieve_ticker_types()
+    # result = retrieve_tickers_using_exchanges_and_ticker_types([2, 3, 6], 5)
+    result = retrieve_ohlcv_using_ticker_id_and_dates(5219, "2023-01-01", "2023-10-01")
     logger.info(f"Finished - result = {result}")
     print(f"Finished - result = {result}")
