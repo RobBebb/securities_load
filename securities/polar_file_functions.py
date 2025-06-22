@@ -11,7 +11,7 @@ from securities_load.securities.polar_table_functions import (
 logger = logging.getLogger(__name__)
 
 
-def read_indices() -> pl.DataFrame:
+def read_indices(indices_csv_file: str) -> pl.DataFrame:
     """Read the indices.csv text file. This file lists the indices we interested in. It has their
     name,symbol,asx_symbol,yahoo_symbol,country,currency,ticker_type,ticker_sub_type where applicable."""
     logger.debug("Started")
@@ -44,7 +44,17 @@ def transform_indices(indices: pl.DataFrame) -> pl.DataFrame:
         .alias("exchange_id")
     )
 
-    indices = indices.rename({"symbol": "ticker", "yahoo_symbol": "yahoo_ticker"})
+    indices = indices.rename(
+        {
+            "symbol": "ticker",
+            "yahoo_symbol": "yahoo_ticker",
+            "currency": "currency_code",
+        }
+    )
+
+    indices = indices.drop(
+        "exchange", "ticker_type", "ticker_sub_type", "asx_symbol", "country"
+    )
 
     return indices
 
@@ -63,7 +73,7 @@ if __name__ == "__main__":
 
     logger.info("Start")
 
-    result = read_indices()
+    result = read_indices("/home/ubuntuuser/karra/securities_load/data/watchlists.csv")
     result2 = transform_indices(result)
     logger.info(f"Finished - result = {result}")
     logger.info(f"Finished - result2 = {result2}")
