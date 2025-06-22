@@ -35,6 +35,34 @@ def get_ticker_type_id_using_code(code: str) -> int:
     return id
 
 
+def get_ticker_sub_type_id_using_code(code: str) -> int:
+    """
+    Get the ticker sub_type ID for a given ticker type code.
+    """
+
+    logger.debug("Started")
+
+    query = f"SELECT id FROM securities.ticker_sub_type WHERE code = '{code}'"
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(f"No ticker sub type found for code: {code}")
+
+    id = pl_df["id"][0]
+
+    if not isinstance(id, int):
+        raise TypeError(f"Expected id to be an int, got {type(id)}")
+
+    logger.debug(f"Finished - id = {id}")
+
+    return id
+
+
 def get_data_vendor_id_using_name(name: str) -> int:
     """
     Get the data vendor ID for a given data vendor name.
@@ -846,7 +874,7 @@ def retrieve_tickers_using_watchlist_code(
 def retrieve_unique_country_alpha_3_from_exchanges() -> pl.DataFrame:
     """
     Input: None
-    Output: pl.DataFrame
+    Output: pl.DataFrame containing country_alpha_3
     This is simply a polars df of unique values in the one column country_alpha_3.
     """
 
@@ -872,7 +900,7 @@ def retrieve_unique_country_alpha_3_from_exchanges() -> pl.DataFrame:
     return pl_df
 
 
-def retrieve_exchange_id_using_country_alpha_3(
+def retrieve_exchange_ids_using_country_alpha_3(
     country_alpha_3: str,
 ) -> pl.DataFrame:
     """
@@ -982,7 +1010,7 @@ def retrieve_ohlcv_using_ticker_id_and_dates(
     logger.debug("Started")
 
     query = f"""
-        SELECT date,
+        SELECT date AS Date,
         open AS Open,
         high AS High,
         low AS Low,
@@ -992,6 +1020,7 @@ def retrieve_ohlcv_using_ticker_id_and_dates(
         WHERE ticker_id = {ticker_id}
         AND date >= '{start_date}'
         AND date <= '{end_date}'
+        ORDER BY date
     """
 
     try:
