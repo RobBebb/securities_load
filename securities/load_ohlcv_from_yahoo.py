@@ -10,7 +10,7 @@ from securities_load.securities.postgresql_database_functions import (
 from securities_load.securities.securities_table_functions import (
     add_or_update_ohlcvs,
     get_data_vendor_id,
-    get_tickers_using_exchange_code,
+    get_tickers_with_yahoo_ticker,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,17 +37,16 @@ def load_ohlcv_from_yahoo(period: str = "5d") -> None:
     engine = sqlalchemy_engine()
 
     YAHOO_CODE = "Yahoo"
-    EXCHANGE_CODE = "XASX"
 
     data_vendor_id = get_data_vendor_id(engine, YAHOO_CODE)
     if data_vendor_id is None:
         logger.error(f"No data_vendor_id found for YAHOO_CODE: {YAHOO_CODE}!")
         return
 
-    tickers = get_tickers_using_exchange_code(engine, EXCHANGE_CODE)
+    tickers = get_tickers_with_yahoo_ticker(engine)
 
     if tickers is None:
-        logger.error(f"No tickers found for EXCHANGE_CODE: {EXCHANGE_CODE}!")
+        logger.error("No tickers found for Yahoo!")
         return
 
     for ticker_tuple in tickers:

@@ -2,7 +2,6 @@ import logging
 
 import pytest
 from dotenv import load_dotenv
-
 from securities_load.securities.postgresql_database_functions import (
     connect,
     sqlalchemy_engine,
@@ -24,7 +23,7 @@ from securities_load.securities.securities_table_functions import (
     get_ticker_id,
     get_ticker_type_id,
     get_ticker_using_id,
-    get_tickers_using_exchange_code,
+    get_tickers_with_yahoo_ticker,
     get_watchlist_id_from_code,
     retrieve_ohlcv_from_to,
     retrieve_ohlcv_last_n_days,
@@ -188,11 +187,11 @@ def test_get_watchlist_id_from_code_not_found(engine):
 
 
 def test_get_tickers_using_exchange_code_successful(engine):
-    print(get_tickers_using_exchange_code(engine, "XASX"))
+    print(get_tickers_with_yahoo_ticker(engine, "XASX"))
 
 
 def test_get_tickers_using_exchange_code_not_found(engine):
-    assert get_tickers_using_exchange_code(engine, "ZZZ") == []
+    assert get_tickers_with_yahoo_ticker(engine, "ZZZ") == []
 
 
 def test_retrieve_ohlcv_last_n_days_successful(engine):
