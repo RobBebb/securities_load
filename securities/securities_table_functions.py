@@ -350,7 +350,7 @@ def get_ticker_id_using_yahoo_ticker(engine: Engine, yahoo_ticker: str) -> int |
         return result[0] if result is not None else result
 
 
-def get_tickers_using_exchange_code(engine: Engine, exchange_code: str) -> list | None:
+def get_tickers_with_yahoo_ticker(engine: Engine) -> list | None:
     """
     Read the ticker table and return ticker_id
     Parameters:
@@ -359,20 +359,16 @@ def get_tickers_using_exchange_code(engine: Engine, exchange_code: str) -> list 
     """
     logger.debug("Started")
 
-    exchange_id = get_exchange_id(engine, exchange_code)
-
     table = "securities.ticker"
 
     # create a list of columns from the dataframe
     table_columns = "id, yahoo_ticker"
-    condition = "exchange_id = :exchange_id"
-    data = {"exchange_id": exchange_id}
 
-    select_stmt = f"SELECT {table_columns} FROM {table} WHERE {condition} AND yahoo_ticker is not null"
+    select_stmt = f"SELECT {table_columns} FROM {table} WHERE yahoo_ticker is not null"
     sql = text(select_stmt)
 
     with engine.connect() as connection:
-        tickers = connection.execute(sql, data).fetchall()
+        tickers = connection.execute(sql).fetchall()
 
     yahoo_tickers = []
 

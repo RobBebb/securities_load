@@ -19,6 +19,6 @@ logging.basicConfig(
 
 logger.info("Started")
 
-load_ohlcv_from_yahoo(period="5d")
+load_ohlcv_from_yahoo(period="max")
 
 logger.info("Completed")
