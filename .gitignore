@@ -41,3 +41,4 @@ load_watchlist_tickers.log
 watchlist_tickers_transformed.csv
 indices_transformed.csv
 load_indices.log
+data/indices.txt

@@ -56,7 +56,7 @@ S&P TSX Smallcap,TSX,SPTSES,,^SPTSES,CAN,CAD,index,additional
 S&P TSX Venture Composite,TSX,SPCDNX,,^SPCDNX,CAN,CAD,index,additional
 S&P TSX Completion,TSX,SPTSEM,,^SPTSEM,CAN,CAD,index,additional
 S&P TSX 60,TSX,SPTSE,,^SPTSE,CAN,CAD,index,additional
-S&P 500,XNYS,SPX,,^GSPC,USA,USD,index,major
+S&P 500,XNYS,SPX,,^SPX,USA,USD,index,major
 Dow Jones Industrial Average,XNYS,DJI,,^DJI,USA,USD,index,major
 Nasdaq 100,XNAS,NDX,,^NDX,USA,USD,index,major
 Nasdaq Composite,XNAS,IXIC,,^IXIC,USA,USD,index,major
