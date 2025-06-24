@@ -1039,6 +1039,45 @@ def retrieve_ohlcv_using_ticker_id_and_dates(
     return pl_df
 
 
+def retrieve_expiry_dates_using_ticker_id(ticker_id: int) -> pl.DataFrame:
+    """
+    Input: ticker_id: int
+    Output: pl.DataFrame
+    Use the ticker_id, start and end value passed in to get a polars df containing ohlcv data.
+    """
+
+    logger.debug("Started")
+
+    query = f"""
+        SELECT date AS Date,
+        open AS Open,
+        high AS High,
+        low AS Low,
+        close AS Close,
+        volume AS Volume
+        FROM securities.ohlcv o
+        WHERE ticker_id = {ticker_id}
+        AND date >= '{start_date}'
+        AND date <= '{end_date}'
+        ORDER BY date
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No OHLCV data found for ticker_id: {ticker_id} between {start_date} and {end_date}"
+        )
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape} rows")
+
+    return pl_df
+
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
