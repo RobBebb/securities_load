@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 import polars as pl
@@ -1039,10 +1040,10 @@ def retrieve_ohlcv_using_ticker_id_and_dates(
     return pl_df
 
 
-def retrieve_expiry_dates_using_ticker_id(ticker_id: int) -> pl.DataFrame:
+def get_latest_ohlcv_using_ticker_id(ticker_id: int) -> pl.DataFrame:
     """
     Input: ticker_id: int
-    Output: pl.DataFrame
+    Output: dataframe
     Use the ticker_id, start and end value passed in to get a polars df containing ohlcv data.
     """
 
@@ -1055,12 +1056,10 @@ def retrieve_expiry_dates_using_ticker_id(ticker_id: int) -> pl.DataFrame:
         low AS Low,
         close AS Close,
         volume AS Volume
-        FROM securities.ohlcv o
-        WHERE ticker_id = {ticker_id}
-        AND date >= '{start_date}'
-        AND date <= '{end_date}'
-        ORDER BY date
-    """
+        FROM securities.ohlcv o1
+        WHERE date = (SELECT MAX(date) FROM securities.ohlcv o2 WHERE o1.ticker_id=o2.ticker_id)
+        AND ticker_id = {ticker_id}
+        """
 
     try:
         pl_df = pl.read_database_uri(query=query, uri=get_uri())
@@ -1071,6 +1070,128 @@ def retrieve_expiry_dates_using_ticker_id(ticker_id: int) -> pl.DataFrame:
     if pl_df.is_empty():
         raise ValueError(
             f"No OHLCV data found for ticker_id: {ticker_id} between {start_date} and {end_date}"
+        )
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape} rows")
+
+    return pl_df
+
+
+def retrieve_expiry_dates_using_ticker_id(ticker_id: int) -> pl.DataFrame:
+    """
+    Input: ticker_id: int
+    Output: pl.DataFrame
+    Use the ticker_id, start and end value passed in to get a polars df containing ohlcv data.
+    """
+
+    logger.debug("Started")
+
+    today = datetime.datetime.now()
+
+    query = f"""
+        SELECT DISTINCT DATE(expiry_date) AS expiry
+        FROM securities.ticker
+        WHERE underlying_ticker = '{ticker_id}'
+        AND expiry_date >= '{today}'
+        ORDER BY expiry ASC
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(f"No expiry dates found for ticker_id: {ticker_id}")
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape} rows")
+
+    return pl_df
+
+
+def retrieve_options_using_ticker_id_and_expiry_date(
+    underlying_ticker_id: int, expiry_date: str
+) -> pl.DataFrame:
+    """
+    Input: ticker_id: int, expiry_date: datetime
+    Output: pl.DataFrame
+    Use the ticker_id and expiry_date passed in to get a polars df containing the option information data.
+    """
+
+    logger.debug("Started")
+
+    query = f"""
+        SELECT id, ticker, call_put, strike, expiry_date
+        FROM securities.ticker
+        WHERE underlying_ticker = '{underlying_ticker_id}'
+        AND expiry_date ='{expiry_date}'
+        ORDER BY call_put, strike
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No options found for ticker_id: {underlying_ticker_id} expiry_date: {expiry_date}"
+        )
+
+    logger.debug(f"Finished - Retrieved {pl_df.shape} rows")
+
+    return pl_df
+
+
+def retrieve_last_option_prices_using_stock_ticker_id_and_expiry_date_and_last_date(
+    stock_ticker_id: int, expiry_date: str, last_date: str
+) -> pl.DataFrame:
+    """
+    Input: ticker_id: int, last_date: datetime
+    Output: pl.DataFrame
+    Use the ticker_id and expiry_date passed in to get a polars df containing the option information data.
+    """
+
+    logger.debug("Started")
+
+    query = f"""
+        SELECT t.id,
+        t.call_put,
+        t.strike,
+        t.expiry_date,
+        o.date,
+        o.last_trade_date,
+        o.last_price,
+        o.bid,
+        o.ask,
+        o.change,
+        o.percent_change,
+        o.volume,
+        o.open_interest,
+        o.implied_volatility,
+        o.in_the_money
+        FROM securities.option_data o
+        INNER JOIN securities.ticker t on t.id = o.ticker_id
+        WHERE
+        o.date = '{last_date}'
+        AND
+        t.expiry_date = '{expiry_date}'
+        AND
+        t.underlying_ticker = '{stock_ticker_id}'
+        ORDER BY t.call_put, t.expiry_date, t.strike
+        """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No options found for stock_ticker_id: {stock_ticker_id} last_date: {last_date}"
         )
 
     logger.debug(f"Finished - Retrieved {pl_df.shape} rows")
@@ -1122,6 +1243,14 @@ if __name__ == "__main__":
     # result = retrieve_exchange_id_using_country_alpha_3("USA")
     # result = retrieve_ticker_types()
     # result = retrieve_tickers_using_exchanges_and_ticker_types([2, 3, 6], 5)
-    result = retrieve_ohlcv_using_ticker_id_and_dates(5219, "2023-01-01", "2023-10-01")
+    # result = retrieve_ohlcv_using_ticker_id_and_dates(5219, "2023-01-01", "2023-10-01")
+    result = retrieve_expiry_dates_using_ticker_id(5230)
+    # result = retrieve_options_using_ticker_id_and_expiry_date(5230, "2025-05-30")
+    # result = get_latest_ohlcv_using_ticker_id(5230)
+    # result = (
+    #     retrieve_last_option_prices_using_stock_ticker_id_and_expiry_date_and_last_date(
+    #         5230, "2025-07-03", "2025-06-24"
+    #     )
+    # )
     logger.info(f"Finished - result = {result}")
     print(f"Finished - result = {result}")
