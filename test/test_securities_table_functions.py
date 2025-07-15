@@ -33,7 +33,7 @@ from securities_load.securities.securities_table_functions import (
 @pytest.fixture
 def logger():
     module_logger = logging.getLogger(__name__)
-    module_logger.info(f"test_securities_table_functions started")
+    module_logger.info("test_securities_table_functions started")
 
 
 @pytest.fixture

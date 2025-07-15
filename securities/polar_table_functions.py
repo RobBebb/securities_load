@@ -733,6 +733,45 @@ def retrieve_close_using_currency_tickers_dates(
     return pl_df
 
 
+def retrieve_close_using_ticker_ids_and_dates(
+    ticker_ids: list[int], start_date: str, end_date: str
+) -> pl.DataFrame:
+    """
+    Retrieve close data for a list of tickers between specified start and end dates.
+    This data is returned in a polars dataframe in long format with columns: date, ticker, close.
+    """
+
+    logger.debug("Started")
+
+    # Convert the list into a string for the SQL query. Single quotes must be used for SQL.
+    ticker_ids_string = "'" + "', '".join(map(str, ticker_ids)) + "'"
+    query = f"""
+        SELECT o.date, t.id, t.ticker, o.close
+        FROM securities.ticker AS t
+        INNER JOIN securities.ohlcv AS o 
+        ON t.id = o.ticker_id
+        WHERE t.id IN ({ticker_ids_string})
+        AND date >= '{start_date}'
+        AND date <= '{end_date}'
+        ORDER BY t.ticker, o.date
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No close data found for tickers: {ticker_ids} between {start_date} and {end_date}"
+        )
+
+    logger.debug(f"Finished - Retrieved {len(pl_df)} rows")
+
+    return pl_df
+
+
 def get_ticker_ids_using_currency_code_and_tickers(
     currency_code: str, tickers: list[str]
 ) -> list[int]:
@@ -1068,9 +1107,7 @@ def get_latest_ohlcv_using_ticker_id(ticker_id: int) -> pl.DataFrame:
         raise e
 
     if pl_df.is_empty():
-        raise ValueError(
-            f"No OHLCV data found for ticker_id: {ticker_id} between {start_date} and {end_date}"
-        )
+        raise ValueError(f"No OHLCV data found for ticker_id: {ticker_id}")
 
     logger.debug(f"Finished - Retrieved {pl_df.shape} rows")
 
@@ -1158,6 +1195,7 @@ def retrieve_last_option_prices_using_stock_ticker_id_and_expiry_date_and_last_d
 
     query = f"""
         SELECT t.id,
+        t.ticker,
         t.call_put,
         t.strike,
         t.expiry_date,
@@ -1195,6 +1233,88 @@ def retrieve_last_option_prices_using_stock_ticker_id_and_expiry_date_and_last_d
         )
 
     logger.debug(f"Finished - Retrieved {pl_df.shape} rows")
+
+    return pl_df
+
+
+def retrieve_close_using_exchanges_tickers_dates(
+    exchanges: list[str], tickers: list[str], start_date: str, end_date: str
+) -> pl.DataFrame:
+    """
+    Retrieve close data for a given currency and list of tickers between specified start and end dates.
+    This data is returned in a polars dataframe in long format with columns: date, ticker, close.
+    """
+
+    logger.debug("Started")
+
+    # Convert the list into a string for the SQL query. Single quotes must be used for SQL.
+    tickers_string = "'" + "', '".join(tickers) + "'"
+    exchanges_string = "'" + "', '".join(exchanges) + "'"
+
+    query = f"""
+        SELECT o.date, t.ticker, o.close
+        FROM securities.ticker AS t
+        INNER JOIN securities.ohlcv AS o 
+        ON t.id = o.ticker_id
+        INNER JOIN securities.exchange AS e
+        ON t.exchange_id = e.id
+        WHERE e.code IN '{exchanges_string}' AND t.ticker IN ({tickers_string})
+        AND date >= '{start_date}'
+        AND date <= '{end_date}'
+        ORDER BY t.ticker, o.date
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No close data found for tickers: {tickers} between {start_date} and {end_date}"
+        )
+
+    logger.debug(f"Finished - Retrieved {len(pl_df)} rows")
+
+    return pl_df
+
+
+def retrieve_ohlcv_using_ticker_ids_and_dates(
+    ticker_ids: list[int], start_date: str, end_date: str
+) -> pl.DataFrame:
+    """
+    Retrieve ohlcv data for a list of tickers between specified start and end dates.
+    This data is returned in a polars dataframe in long format with columns: date, ticker, close.
+    """
+
+    logger.debug("Started")
+
+    # Convert the list into a string for the SQL query. Single quotes must be used for SQL.
+    ticker_ids_string = "'" + "', '".join(map(str, ticker_ids)) + "'"
+    query = f"""
+        SELECT t.id, t.ticker, o.date, o.open, o.high, o.low, o.close, o.volume
+        FROM securities.ticker AS t
+        INNER JOIN securities.ohlcv AS o 
+        ON t.id = o.ticker_id
+        WHERE t.id IN ({ticker_ids_string})
+        AND date >= '{start_date}'
+        AND date <= '{end_date}'
+        ORDER BY t.ticker, o.date
+    """
+
+    try:
+        pl_df = pl.read_database_uri(query=query, uri=get_uri())
+    except Exception as e:
+        logger.exception(f"Error {e} from executing query: {query}")
+        raise e
+
+    if pl_df.is_empty():
+        raise ValueError(
+            f"No close data found for tickers: {ticker_ids} between {start_date} and {end_date}"
+        )
+
+    logger.debug(f"Finished - Retrieved {len(pl_df)} rows")
 
     return pl_df
 
@@ -1244,7 +1364,7 @@ if __name__ == "__main__":
     # result = retrieve_ticker_types()
     # result = retrieve_tickers_using_exchanges_and_ticker_types([2, 3, 6], 5)
     # result = retrieve_ohlcv_using_ticker_id_and_dates(5219, "2023-01-01", "2023-10-01")
-    result = retrieve_expiry_dates_using_ticker_id(5230)
+    # result = retrieve_expiry_dates_using_ticker_id(5230)
     # result = retrieve_options_using_ticker_id_and_expiry_date(5230, "2025-05-30")
     # result = get_latest_ohlcv_using_ticker_id(5230)
     # result = (
@@ -1252,5 +1372,11 @@ if __name__ == "__main__":
     #         5230, "2025-07-03", "2025-06-24"
     #     )
     # )
+    # result = retrieve_close_using_ticker_ids_and_dates(
+    #     [5219, 5230], "2023-01-01", "2023-10-01"
+    # )
+    result = retrieve_ohlcv_using_ticker_ids_and_dates(
+        [5219, 5230], "2024-01-01", "2025-06-27"
+    )
     logger.info(f"Finished - result = {result}")
     print(f"Finished - result = {result}")

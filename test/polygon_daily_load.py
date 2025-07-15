@@ -5,8 +5,6 @@ Author: Rob Bebbington
 Get daily data from polygon and insert it into our database.
 """
 
-from os import lseek
-
 from dotenv import load_dotenv
 
 import securities_load.load_polygon.polygon_load_ohlcv as plo

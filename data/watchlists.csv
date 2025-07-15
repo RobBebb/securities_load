@@ -215,25 +215,40 @@ US Sector Samples,Utilities,XNYS,EIX
 US Sector Samples,Utilities,XNYS,FE
 US Sector Samples,Utilities,XNYS,ETR
 US Sector Samples,Utilities,XNYS,AEE
-Dashboard,US Overview,ARCX,SPY
-Dashboard,US Overview,XNAS,QQQ
-Dashboard,US Overview,ARCX,IWM
-Dashboard,US Overview,ARCX,BITO
-Dashboard,US Overview,ARCX,GLD
-Dashboard,US Overview,ARCX,SLV
-Dashboard,US Overview,XNAS,TLT
-Dashboard,US Overview,BATS,VXX
-Dashboard,US Sector Overview,ARCX,XLI
-Dashboard,US Sector Overview,ARCX,XLB
-Dashboard,US Sector Overview,ARCX,XLRE
-Dashboard,US Sector Overview,ARCX,XLC
-Dashboard,US Sector Overview,ARCX,XLE
-Dashboard,US Sector Overview,ARCX,XLF
-Dashboard,US Sector Overview,ARCX,XLK
-Dashboard,US Sector Overview,ARCX,XLP
-Dashboard,US Sector Overview,ARCX,XLU
-Dashboard,US Sector Overview,ARCX,XLV
-Dashboard,US Sector Overview,ARCX,XLY
+Dashboard,USA Overview,ARCX,SPY
+Dashboard,USA Overview,XNAS,QQQ
+Dashboard,USA Overview,ARCX,IWM
+Dashboard,USA Overview,ARCX,BITO
+Dashboard,USA Overview,ARCX,GLD
+Dashboard,USA Overview,ARCX,SLV
+Dashboard,USA Overview,XNAS,TLT
+Dashboard,USA Overview,BATS,VXX
+Dashboard,AUS Overview,XASX,XGD
+Dashboard,AUS Overview,XASX,XAO
+Dashboard,AUS Overview,XASX,XJO
+Dashboard,AUS Overview,XASX,XVI
+Dashboard,USA Sector Overview,ARCX,XLI
+Dashboard,USA Sector Overview,ARCX,XLB
+Dashboard,USA Sector Overview,ARCX,XLRE
+Dashboard,USA Sector Overview,ARCX,XLC
+Dashboard,USA Sector Overview,ARCX,XLE
+Dashboard,USA Sector Overview,ARCX,XLF
+Dashboard,USA Sector Overview,ARCX,XLK
+Dashboard,USA Sector Overview,ARCX,XLP
+Dashboard,USA Sector Overview,ARCX,XLU
+Dashboard,USA Sector Overview,ARCX,XLV
+Dashboard,USA Sector Overview,ARCX,XLY
+Dashboard,AUS Sector Overview,XASX,XDJ
+Dashboard,AUS Sector Overview,XASX,XEJ
+Dashboard,AUS Sector Overview,XASX,XFJ
+Dashboard,AUS Sector Overview,XASX,XHJ
+Dashboard,AUS Sector Overview,XASX,XIJ
+Dashboard,AUS Sector Overview,XASX,XMJ
+Dashboard,AUS Sector Overview,XASX,XNJ
+Dashboard,AUS Sector Overview,XASX,XPJ
+Dashboard,AUS Sector Overview,XASX,XSJ
+Dashboard,AUS Sector Overview,XASX,XTJ
+Dashboard,AUS Sector Overview,XASX,XUJ
 Special Interest,US ETPs,ARCX,BITO
 Special Interest,US ETPs,ARCX,EEM
 Special Interest,US ETPs,ARCX,EFA
