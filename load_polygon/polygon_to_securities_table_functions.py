@@ -239,6 +239,52 @@ def add_etp_tickers(conn):
             # print("PostgreSQL cursor is closed")
 
 
+def add_adr_tickers(conn):
+    """
+    Adds americam depository receipts to the ticker table
+    Parameters:
+        conn - database connection
+    """
+    logger.debug("Started")
+
+    ticker_type_id = get_ticker_type_id(conn, "adr")
+    currency_code = get_currency_code(conn, "US Dollar")
+
+    table = "securities.ticker"
+
+    # create a list of columns from the dataframe
+    columns = """ticker, figi, name, currency_code, exchange_id, delisted_utc, ticker_type_id"""
+    # create VALUES('%s', '%s',...) one '%s' per column
+    values = (
+        f"SELECT ticker, composite_figi, t.name, '{currency_code}', e.id, delisted_utc, {ticker_type_id}"
+        " FROM polygon.ticker t"
+        " LEFT JOIN securities.exchange e on e.code = t.primary_exchange"
+        " WHERE market = 'stocks' AND type IN ('ADRC', 'ADRP')"
+    )
+    # what to do on conflict
+    conflict = (
+        "ON CONFLICT (exchange_id, ticker) "
+        "DO UPDATE SET (figi, name, currency_code, delisted_utc, ticker_type_id, last_updated_date) "
+        f"= (EXCLUDED.figi, EXCLUDED.name, '{currency_code}', EXCLUDED.delisted_utc, {ticker_type_id}, CURRENT_TIMESTAMP)"
+    )
+
+    # create INSERT INTO table (columns) VALUES('%s',...)
+    insert_stmt = f"INSERT INTO {table} ({columns}) {values} {conflict};"
+    # print(insert_stmt)
+    try:
+        cur = conn.cursor()
+        # add the rows from the dataframe to the table
+        cur.execute(insert_stmt)
+        conn.commit()
+        logger.info(f"Insert to table {table} successful.")
+    except psycopg2.Error as error:
+        logger.exception("")
+    finally:
+        if conn:
+            cur.close()
+            # print("PostgreSQL cursor is closed")
+
+
 def get_ticker_type_id(conn, code):
     """
     Read the ticker_type table and return the id
@@ -356,7 +402,7 @@ def add_ohlcvs(conn):
         conn.commit()
         logger.info(f"Insert to table {table} successful.")
     except psycopg2.Error as error:
-        logger.exception("")
+        logger.exception(error)
     finally:
         if conn:
             cur.close()

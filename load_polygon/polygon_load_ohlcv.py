@@ -7,6 +7,7 @@ Get the data from polygon and load it into the local polygon database.
 
 import logging
 from datetime import datetime, timedelta
+from time import sleep
 
 from securities_load.load_polygon.polygon_rest_functions import (
     get_ohlcv,
@@ -40,6 +41,7 @@ def load_ohlcvs(days=2):
         if ohlcv_data is not None:
             # print(ohlcv_data.shape)
             add_ohlcv(conn, ohlcv_data)
+        sleep(20)
 
     # Close the connection
     conn.close()

@@ -23,6 +23,8 @@ from polygon.rest.models import (
     TickerTypes,
 )
 
+from securities_load.securities.polar_table_functions import get_ticker_using_id
+
 logger = logging.getLogger(__name__)
 
 
@@ -381,6 +383,90 @@ def get_ohlcv_by_date(ohlcv_date=dt.now(tz.utc)):
         return ohlcv_data
     except exceptions.BadResponse as e:
         logger.error(f"Non-200 response from polygon API, error: {e}")
+
+    logger.debug("Finished")
+
+
+def get_ohlcvs_for_a_stock(
+    ticker_id: int, start_date=dt.now(tz.utc), end_date=dt.now(tz.utc)
+):
+    """
+    Get the daily open, high, low, and close (OHLC) for a stock for multiple days.
+    Returns a dataframe.
+    Parameters:
+    days - the number of days in the past to look for based on the ohlcv date
+    docs
+    https://polygon.io/docs/stocks/get_v2_aggs_grouped_locale_us_market_stocks__date
+    https://polygon-api-client.readthedocs.io/en/latest/Aggs.html#get-grouped-daily-aggs
+    """
+
+    logger.debug("Started")
+
+    logger.debug(f"start date is {start_date}.")
+    logger.debug(f"end date is {end_date}.")
+
+    # client = RESTClient("XXXXXX") # hardcoded api_key is used
+    key = os.environ["POLYGON"]
+    try:
+        client = RESTClient(api_key=key)  # POLYGON_API_KEY environment variable is used
+    except exceptions.AuthError as e:
+        logger.error(f"Empty or invalid polygon API key, error: {e}")
+        return
+
+    # create a list of columns names for the dataframe
+    dataframe_columns = [
+        "ticker",
+        "close",
+        "high",
+        "low",
+        "transactions",
+        "open",
+        "otc",
+        "polygon_timestamp",
+        "volume",
+        "volume_weighted_average_price",
+        "ohlcv_date",
+    ]
+
+    ticker = get_ticker_using_id(ticker_id)
+
+    start_string_date = start_date.strftime("%Y-%m-%d")
+    end_string_date = end_date.strftime("%Y-%m-%d")
+
+    # create an empty list to append the retrieved data into.
+    aggs = []
+
+    try:
+        # get the ohlcvs from massive
+        aggs = client.list_aggs(ticker[0], 1, "day", start_string_date, end_string_date)
+
+    except exceptions.BadResponse as e:
+        logger.error(f"Non-200 response from polygon API, error: {e}")
+
+    ohlcv_list = []
+
+    for agg in aggs:
+        # verify this is an groupedDailyAgg
+        if isinstance(agg, GroupedDailyAgg):
+            # Create a list of fields
+            row = [
+                agg.ticker,
+                agg.close,
+                agg.high,
+                agg.low,
+                agg.transactions or 0,
+                agg.open,
+                agg.otc,
+                dt.fromtimestamp(int(agg.timestamp) / 1000),  # type: ignore
+                agg.volume,
+                agg.vwap,
+            ]
+            # add the list to the dataframe as a row
+            # ohlcv_data.loc[len(ohlcv_data)] = row
+            ohlcv_list.append(row)
+
+    ohlcv_data = pd.DataFrame(ohlcv_list, columns=dataframe_columns)
+    return ohlcv_data
 
     logger.debug("Finished")
 

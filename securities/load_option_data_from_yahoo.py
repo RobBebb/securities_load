@@ -78,7 +78,7 @@ def load_option_data_from_yahoo() -> None:
         # Get all the expiry dates for the ticker
         expiries = yf_ticker.options
 
-        # Loop through thwe expiry dates
+        # Loop through the expiry dates
         for expiry in expiries:
             logger.debug(f"Prcessing ticker: {yahoo_ticker}, expiry: {expiry}")
             try:

@@ -10,6 +10,7 @@ import logging
 from dotenv import load_dotenv
 
 from securities_load.load_polygon.polygon_to_securities_table_functions import (
+    add_adr_tickers,
     add_dividends,
     add_etp_tickers,
     add_ohlcvs,
@@ -37,6 +38,7 @@ conn = connect()
 
 # add_stock_tickers(conn)
 # add_etp_tickers(conn)
+# add_adr_tickers(conn)
 # add_dividends(conn)
 # add_splits(conn)
 # FIXME For indices duplicates are added as the primary_exchange is NULL.

@@ -865,7 +865,13 @@ def retrieve_tickers_using_watchlist_code(
     watchlist_code: str,
 ) -> list[tuple[int, str, str]]:
     """
-    Retrieves the tickers of the specified watchlist.
+    Retrieves the tickers in the specified watchlist code.
+    Args:
+        watchlist_code (str): The code of the watchlist to retrieve tickers from.
+    Returns:
+        list[tuple[int, str, str]]: A list of tuples where each tuple
+        is for one stock and the tuple contains the ticker_id, ticker, and
+        ticker_name for that stock.
     """
 
     logger.debug("Started")

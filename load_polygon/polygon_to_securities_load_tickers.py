@@ -8,6 +8,7 @@ Get the daily_price data from the local polygon schema and load it into the loca
 from dotenv import load_dotenv
 
 from securities_load.load_polygon.polygon_to_securities_table_functions import (
+    add_adr_tickers,
     add_etp_tickers,
     add_stock_tickers,
 )
@@ -27,5 +28,6 @@ def load_tickers():
 
     add_stock_tickers(conn)
     add_etp_tickers(conn)
+    add_adr_tickers(conn)
     # Close the connection
     conn.close()
